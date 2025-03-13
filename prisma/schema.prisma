@@ -17,11 +17,12 @@ model Word {
   id             Int       @id @default(autoincrement())
   english        String
   japanese       String
-  level          String    @default("TOEIC 600-700")
-  userId         String    // ユーザーIDを追加
+  tag          String    @default("TOEIC 600-700")
+  userId         String    
   lastStudied    DateTime?
   correctCount   Int       @default(0)
   incorrectCount Int       @default(0)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
+

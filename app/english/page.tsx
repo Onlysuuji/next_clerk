@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, FormEvent, useRef } from 'react'
+import SpeechUpload from '../components/SpeechUpload'
 
 // 単語の型定義
 interface Word {
@@ -25,6 +26,23 @@ interface AnswerEvaluation {
   suggestion: string
   grammarCorrection?: string
   vocabularySuggestion?: string
+  score: number
+}
+
+// 発音評価の結果の型定義
+interface PronunciationEvaluation {
+  recognizedText: string;
+  pronunciationScore: number;
+  accuracyScore: number;
+  fluencyScore: number;
+  completenessScore: number;
+  words: {
+    Word: string;
+    PronunciationScore: number;
+    Duration: number;
+    AccuracyScore?: number;
+  }[];
+  rawResult?: any;
 }
 
 export default function EnglishStudyPage() {
@@ -39,7 +57,15 @@ export default function EnglishStudyPage() {
   const [showAnswer, setShowAnswer] = useState<boolean>(false)
   const [evaluation, setEvaluation] = useState<AnswerEvaluation | null>(null)
   const [words, setWords] = useState<Word[]>([])
-  
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [pronunciationEvaluation, setPronunciationEvaluation] = useState<PronunciationEvaluation | null>(null);
+  const [showPronunciationPractice, setShowPronunciationPractice] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [recognizedText, setRecognizedText] = useState<string>('');
+  const [isSimpleRecognition, setIsSimpleRecognition] = useState<boolean>(false);
+
   const inputRef = useRef<HTMLInputElement>(null)
 
   // データベースから単語を取得
@@ -47,11 +73,11 @@ export default function EnglishStudyPage() {
     try {
       setDataLoading(true)
       const response = await fetch('/api/words?language=english')
-      
+
       if (!response.ok) {
         throw new Error('単語データの取得に失敗しました')
       }
-      
+
       const data = await response.json()
       return data.words
     } catch (error) {
@@ -67,44 +93,44 @@ export default function EnglishStudyPage() {
     const initializeData = async () => {
       const fetchedWords = await fetchWords()
       setWords(fetchedWords)
-      
+
       // 学習済み単語数を取得
       const studiedCount = fetchedWords.filter(
         (word: Word) => word.correctCount && word.correctCount > 0
       ).length
-      
+
       setCount(studiedCount)
-      
+
       if (fetchedWords.length > 0) {
         loadRandomWord(fetchedWords)
       }
     }
-    
+
     initializeData()
   }, [])
-  
+
   // ランダムな単語を読み込む
   const loadRandomWord = (wordList = words) => {
     if (wordList.length === 0) {
       alert('利用可能な単語がありません。単語を追加してください。')
       return
     }
-    
+
     const randomIndex = Math.floor(Math.random() * wordList.length)
     const selectedWord = wordList[randomIndex]
     setCurrentWord(selectedWord)
-    
+
     // 入力フィールドにフォーカス
     if (inputRef.current) {
       inputRef.current.focus()
     }
-    
+
     // 単語に基づいた例文を生成
     if (selectedWord) {
-      generateExampleSentence(selectedWord.english)
+      generateExampleSentence(selectedWord.english, selectedWord.level)
     }
   }
-  
+
   // OpenAI APIを呼び出す関数
   const callOpenai = async (prompt: string): Promise<string> => {
     try {
@@ -115,11 +141,11 @@ export default function EnglishStudyPage() {
         },
         body: JSON.stringify({ prompt })
       })
-      
+
       if (!response.ok) {
         throw new Error('ネットワークエラーが発生しました')
       }
-      
+
       const data: ApiResponse = await response.json()
       return data.content || ''
     } catch (error) {
@@ -127,52 +153,52 @@ export default function EnglishStudyPage() {
       return ''
     }
   }
-  
+
   // 例文の生成
-  const generateExampleSentence = async (englishWord: string) => {
+  const generateExampleSentence = async (englishWord: string, level: number) => {
     try {
       setIsLoading(true)
-      
+
       // TOEIC 700点レベルに適した例文を生成
-      const examplePrompt = `TOEIC 700点レベルの試験に出てくるような、「${englishWord}」を使った実用的な英文を1つ生成してください。ビジネスシーンや日常生活での使用例が理想的です。英文のみを出力してください。`
-      
+      const examplePrompt = `難易度1から10の1ぐらいの、${englishWord}」を使った実用的な英文を1つ生成してください。日常生活での使用例が理想的です。英文のみを出力してください。`
+
       const generatedExample = await callOpenai(examplePrompt)
       setEnglishExample(generatedExample)
-      
+
       // 日本語訳を取得
       const japanesePrompt = `次の英文を自然な日本語に翻訳してください。翻訳のみを出力してください：${generatedExample}`
       const japaneseTranslation = await callOpenai(japanesePrompt)
       setJapaneseExample(japaneseTranslation)
-      
+
       setIsLoading(false)
     } catch (error) {
       console.error('例文生成エラー:', error)
       setIsLoading(false)
     }
   }
-  
+
   // 学習状況を更新する
   const updateWordStatus = async (wordId: number, isCorrect: boolean) => {
     try {
       if (!currentWord) return
-      
+
       const response = await fetch(`/api/words/${wordId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           isCorrect,
           lastStudied: new Date().toISOString()
         })
       })
-      
+
       if (!response.ok) {
         throw new Error('学習状況の更新に失敗しました')
       }
-      
+
       // ローカルステートも更新
-      setWords(prevWords => 
+      setWords(prevWords =>
         prevWords.map(word => {
           if (word.id === wordId) {
             return {
@@ -185,43 +211,49 @@ export default function EnglishStudyPage() {
           return word
         })
       )
-      
+
     } catch (error) {
       console.error('学習状況更新エラー:', error)
     }
   }
-  
+
   // ユーザーの回答を評価する
   const evaluateAnswer = async (userAnswer: string, correctExample: string) => {
     if (!currentWord) return null
-    
-    const prompt = `
-以下の日本語例文の英訳について、ユーザーの回答を評価してください。
 
-日本語例文: ${japaneseExample}
+    const prompt = `
+あなたは、以下の日本語例文に対するユーザーの英訳を評価するAIです。
+
+日本語例文: ${japaneseExample.toLowerCase()}
 模範英訳: ${correctExample}
 ユーザーの回答: ${userAnswer}
-この例文で使用すべき重要単語: ${currentWord.english}（${currentWord.japanese}）
 
-評価ポイント：
-1. 重要単語「${currentWord.english}」の正しい使用
-2. 文法の正確さ
-3. 自然な表現
+次の「評価ポイント」に基づき、ユーザーの回答を具体的かつ厳密に評価してください。
 
-以下の形式でJSON形式で回答してください:
+評価ポイント（採点基準）：
+- 文法の正確さ（0〜50点）
+  - 文法的な間違いはないか
+  - 時制、主語と述語の一致、冠詞、前置詞、語順などの文法的要素が正しいか
+  - ケアレスミスや細かな誤りも厳密に評価する
+
+- 自然さ・表現の適切さ（0〜50点）
+  - ネイティブスピーカーが使う自然な表現であるか
+  - 直訳的・不自然な表現になっていないか
+  - 状況に適した英単語や言い回しを使えているか
+
+以上を踏まえて、以下のJSON形式で評価結果を返してください。
+
 {
-  "isCorrect": true/false,
+  "score": 0~100,
+  "isCorrect": true/false, // 81点以上ならtrue
   "correctAnswer": "模範英訳",
-  "suggestion": "ユーザーの回答に対する総合的な評価と改善案（日本語で）",
-  "grammarCorrection": "文法の誤りがあれば、それを修正した提案（なければ空白）",
-  "vocabularySuggestion": "より自然な表現や語彙の提案（必要に応じて）"
+  "suggestion": "ユーザーの回答に対する総合的な評価と改善案（日本語で具体的に記述）"
 }
 
-重要：ユーザーの回答に「${currentWord.english}」またはその派生語が含まれていない場合、その点を特に指摘してください。
-`
+なお、評価は非常に厳密に行い、スコアには明確な根拠を反映してください。`
     try {
       const response = await callOpenai(prompt)
-      
+
       // 文字列をJSONオブジェクトに変換
       const jsonMatch = response.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -232,7 +264,7 @@ export default function EnglishStudyPage() {
           console.error('JSON解析エラー:', e)
         }
       }
-      
+
       // JSONパースに失敗した場合は手動で構築
       return {
         isCorrect: false,
@@ -252,52 +284,59 @@ export default function EnglishStudyPage() {
       }
     }
   }
-  
+
   // フォーム送信時の処理
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    
+
     if (yourAnswer.trim() === '') {
       alert('回答を入力してください')
       return
     }
-    
+
     setIsLoading(true)
-    
+
     // ユーザーの回答を評価
     const evaluationResult = await evaluateAnswer(yourAnswer, englishExample)
     setEvaluation(evaluationResult)
-    
+
     // 回答を表示
     setShowAnswer(true)
     setIsLoading(false)
-    
+
+    // 発音練習を表示
+    setShowPronunciationPractice(true)
+
+    // 音声評価をリセット
+    setAudioBlob(null)
+    setPronunciationEvaluation(null)
+
     // 学習状況を更新
     if (currentWord && evaluationResult) {
       await updateWordStatus(currentWord.id, evaluationResult.isCorrect)
-      
+
       // 正解の場合はカウントを増やす
       if (evaluationResult.isCorrect) {
         setCount(prev => prev + 1)
       }
     }
   }
-  
+
   // 次の問題へ進む
   const handleNextQuestion = () => {
-    // リセット
     setYourAnswer('')
     setShowAnswer(false)
     setEvaluation(null)
-    
-    // 次の問題をロード
+    setShowPronunciationPractice(false)
+    setAudioBlob(null)
+    setPronunciationEvaluation(null)
     loadRandomWord()
   }
-  
+
   // 単語を削除する
   const handleDeleteWord = async () => {
     if (!currentWord) return
-    
+
     // 確認ダイアログ
     if (confirm('この単語を本当に削除しますか？')) {
       try {
@@ -305,14 +344,14 @@ export default function EnglishStudyPage() {
         const response = await fetch(`/api/words/${currentWord.id}`, {
           method: 'DELETE',
         })
-        
+
         if (!response.ok) {
           throw new Error('単語の削除に失敗しました')
         }
-        
+
         // 成功したらローカルデータも更新
         setWords(prevWords => prevWords.filter(word => word.id !== currentWord.id))
-        
+
         // 次の問題へ
         handleNextQuestion()
       } catch (error) {
@@ -320,25 +359,6 @@ export default function EnglishStudyPage() {
         alert('単語の削除中にエラーが発生しました')
       }
     }
-  }
-  
-  // 差分をハイライトして表示する関数
-  const highlightDifferences = (userAnswer: string, correctAnswer: string) => {
-    if (!userAnswer) return null;
-    
-    // 単純な比較
-    if (userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim()) {
-      return <span className="text-green-600">{userAnswer}</span>
-    }
-    
-    // 完全に異なる場合
-    return (
-      <div>
-        <span className="text-red-500 line-through">{userAnswer}</span>
-        <span className="mx-2">→</span>
-        <span className="text-green-600">{correctAnswer}</span>
-      </div>
-    )
   }
 
   // 読み込み中の表示
@@ -370,15 +390,15 @@ export default function EnglishStudyPage() {
             日本語の例文を英語に訳して、TOEIC頻出単語を効率的に学習しましょう。
           </p>
         </div>
-        
+
         {words.length === 0 ? (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
             <h3 className="text-lg font-medium text-yellow-700 mb-2">単語が登録されていません</h3>
             <p className="text-yellow-600 mb-4">
               学習するには、まず単語を登録してください。
             </p>
-            <a 
-              href="/english/register" 
+            <a
+              href="/english/register"
               className="inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
             >
               単語登録ページへ
@@ -391,17 +411,17 @@ export default function EnglishStudyPage() {
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                 {/* 進捗バー */}
                 <div className="h-1 bg-gray-100">
-                  <div 
-                    className="h-full bg-blue-500 transition-all duration-500" 
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-500"
                     style={{ width: `${(count / words.length) * 100}%` }}
                   ></div>
                 </div>
-                
+
                 <div className="p-6">
                   <h2 className="text-lg font-medium text-gray-700 mb-4">
                     次の日本語を英語に訳してください
                   </h2>
-                  
+
                   {/* 日本語例文 */}
                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-lg">
                     {isLoading ? (
@@ -419,7 +439,7 @@ export default function EnglishStudyPage() {
                 </div>
               </div>
             )}
-            
+
             {/* 回答フォーム */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -427,29 +447,30 @@ export default function EnglishStudyPage() {
                   <label htmlFor="answer" className="block text-sm font-medium text-gray-700 mb-2">
                     あなたの回答（英語）
                   </label>
-                  <input 
+                  <input
                     id="answer"
-                    type="text" 
+                    type="text"
                     className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     value={yourAnswer}
                     onChange={(e) => setYourAnswer(e.target.value)}
                     ref={inputRef}
-                    autoCorrect="off" 
-                    placeholder="例文の英語訳を入力してください..." 
+                    autoCorrect="off"
+                    placeholder="例文の英語訳を入力してください..."
                     autoCapitalize="off"
-                    spellCheck="false" 
+                    spellCheck="false"
+                    autoComplete="off"
                     disabled={showAnswer || isLoading}
                   />
                 </div>
-                
+
                 <div className="flex justify-between">
-                  <button 
+                  <button
                     type={showAnswer ? 'button' : 'submit'}
                     onClick={showAnswer ? handleNextQuestion : undefined}
                     className={`
                       px-5 py-2 rounded-md font-medium transition-all duration-300 cursor-pointer
-                      ${showAnswer 
-                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                      ${showAnswer
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
                         : 'bg-green-500 hover:bg-green-600 text-white'} 
                       ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
                     `}
@@ -467,8 +488,8 @@ export default function EnglishStudyPage() {
                       showAnswer ? '次の問題へ' : '答え合わせ'
                     )}
                   </button>
-                  
-                  <button 
+
+                  <button
                     type="button"
                     onClick={handleDeleteWord}
                     className="px-5 py-2 bg-red-100 text-red-600 rounded-md font-medium hover:bg-red-200 transition-all duration-300 cursor-pointer"
@@ -484,7 +505,7 @@ export default function EnglishStudyPage() {
                 </div>
               </form>
             </div>
-            
+
             {/* 回答結果 */}
             {showAnswer && evaluation && currentWord && (
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -507,20 +528,8 @@ export default function EnglishStudyPage() {
                     )}
                   </h3>
                 </div>
-                
+
                 <div className="p-6 space-y-5">
-                  {/* 使用すべき単語 */}
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                    <h4 className="font-medium text-blue-700 mb-2">
-                      使用すべき単語:
-                    </h4>
-                    <div className="flex items-center">
-                      <span className="text-lg font-bold text-blue-600">{currentWord.english}</span>
-                      <span className="ml-3 text-gray-600">({currentWord.japanese})</span>
-                    </div>
-                    <div className="mt-1 text-xs text-gray-500">{currentWord.level}</div>
-                  </div>
-                  
                   {/* 問題と回答 */}
                   <div className="space-y-3">
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -533,33 +542,29 @@ export default function EnglishStudyPage() {
                     </div>
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <span className="font-medium text-gray-700">あなたの回答: </span>
-                      {highlightDifferences(yourAnswer, evaluation.correctAnswer)}
+                      {yourAnswer}
                     </div>
                   </div>
-                  
+
                   {/* 評価とアドバイス */}
                   <div>
-                    <h4 className="font-medium text-gray-700 mb-3">
-                      評価・アドバイス:
-                    </h4>
                     <div className="p-4 bg-white rounded-lg border border-gray-200 space-y-4">
-                      <p className="text-gray-700">{evaluation.suggestion}</p>
-                      
-                      {evaluation.grammarCorrection && (
-                        <div className="pl-4 border-l-2 border-blue-200">
-                          <h5 className="font-medium text-blue-700 mb-1">文法の修正:</h5>
-                          <p className="text-gray-600">{evaluation.grammarCorrection}</p>
-                        </div>
-                      )}
-                      
-                      {evaluation.vocabularySuggestion && (
-                        <div className="pl-4 border-l-2 border-green-200">
-                          <h5 className="font-medium text-green-700 mb-1">語彙の提案:</h5>
-                          <p className="text-gray-600">{evaluation.vocabularySuggestion}</p>
-                        </div>
-                      )}
+                      <div className="pl-4 border-l-2 border-blue-200">
+                        <h5 className="font-medium text-blue-700 mb-1">文法の修正:</h5>
+                        <p className="text-gray-600">{evaluation.suggestion}</p>
+                        <p className="text-gray-600">{evaluation.score}</p>
+
+                      </div>
                     </div>
                   </div>
+
+                  {/* 発音練習セクション */}
+                  {showPronunciationPractice && (
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+
+                      <SpeechUpload sentences={evaluation.correctAnswer} />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
