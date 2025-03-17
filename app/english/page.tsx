@@ -57,14 +57,7 @@ export default function EnglishStudyPage() {
   const [showAnswer, setShowAnswer] = useState<boolean>(false)
   const [evaluation, setEvaluation] = useState<AnswerEvaluation | null>(null)
   const [words, setWords] = useState<Word[]>([])
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [pronunciationEvaluation, setPronunciationEvaluation] = useState<PronunciationEvaluation | null>(null);
   const [showPronunciationPractice, setShowPronunciationPractice] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const [recognizedText, setRecognizedText] = useState<string>('');
-  const [isSimpleRecognition, setIsSimpleRecognition] = useState<boolean>(false);
 
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -298,7 +291,6 @@ export default function EnglishStudyPage() {
 
     // ユーザーの回答を評価
     const evaluationResult = await evaluateAnswer(yourAnswer, englishExample)
-    setEvaluation(evaluationResult)
 
     // 回答を表示
     setShowAnswer(true)
@@ -306,10 +298,6 @@ export default function EnglishStudyPage() {
 
     // 発音練習を表示
     setShowPronunciationPractice(true)
-
-    // 音声評価をリセット
-    setAudioBlob(null)
-    setPronunciationEvaluation(null)
 
     // 学習状況を更新
     if (currentWord && evaluationResult) {
@@ -328,8 +316,6 @@ export default function EnglishStudyPage() {
     setShowAnswer(false)
     setEvaluation(null)
     setShowPronunciationPractice(false)
-    setAudioBlob(null)
-    setPronunciationEvaluation(null)
     loadRandomWord()
   }
 
@@ -379,16 +365,13 @@ export default function EnglishStudyPage() {
         {/* ヘッダーセクション */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-800">
-              TOEIC 700点チャレンジ
+            <h1 className="text-gray-600 mt-2">
+            日本語の例文を英語に訳して、TOEIC頻出単語を効率的に学習しましょう。
             </h1>
             <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-md font-medium">
               学習済み: {count} 単語
             </div>
           </div>
-          <p className="text-gray-600 mt-2">
-            日本語の例文を英語に訳して、TOEIC頻出単語を効率的に学習しましょう。
-          </p>
         </div>
 
         {words.length === 0 ? (

@@ -4,12 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Dropdown from './Dropdown'
-import { UserButton } from '@clerk/nextjs'
+import { UserButton, SignInButton, SignIn, useAuth, SignOutButton, SignedIn } from '@clerk/nextjs'
+import { Sign } from 'crypto'
 
 export default function Header() {
     const pathname = usePathname()
     const [language, setLanguage] = useState('english')
     const [activeTab, setActiveTab] = useState('')
+    const { isSignedIn } = useAuth()
 
     const isWordListPage = pathname === `/${language}/wordlist`
 
@@ -120,7 +122,11 @@ export default function Header() {
             </div>
 
             <div className='flex justify-center items-center mr-5 cursor-pointer transition-transform duration-300 hover:scale-105'>
-                <UserButton />
+                {isSignedIn ? (
+                    <>
+                        <UserButton />
+                    </>
+                ) : <SignInButton />}
             </div>
         </nav>
     )

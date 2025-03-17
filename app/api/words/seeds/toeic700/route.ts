@@ -12,7 +12,6 @@ export async function POST(req: Request) {
   const wordsWithUserId = words.map((word: any) => ({
     ...word,
     userId, // 🔥 userId をデータに追加
-    level,
     createdAt: new Date(),
     updatedAt: new Date(),
   }));
