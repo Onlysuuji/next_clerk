@@ -1,0 +1,18 @@
+const b = document.getElementById("item_list");
+
+// <tr> を取得し、932番目以降を処理（存在しない場合は空配列）
+const rows = Array.from(b.querySelectorAll("table > tbody > tr")).slice(920);
+let data = [];
+
+rows.forEach(row => {
+    const language = "english"
+    const question = row.querySelector("td:nth-child(3) > div")?.innerText.trim() || "N/A";
+    const japanese = row.querySelector("td:nth-child(4) > div")?.innerText.trim() || "N/A";
+
+    data.push({ language, question, japanese, tag: "TOEIC700" });
+});
+
+// 配列を JSON 文字列として取得
+const newRow = JSON.stringify(data, null, 2);
+
+console.log(newRow); // デバッグ用

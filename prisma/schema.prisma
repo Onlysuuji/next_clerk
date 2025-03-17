@@ -15,7 +15,8 @@ datasource db {
 
 model Word {
   id             Int       @id @default(autoincrement())
-  english        String
+  language       String    @default("english")
+  question       String
   japanese       String
   tag          String    @default("TOEIC 600-700")
   userId         String    

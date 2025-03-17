@@ -2,50 +2,20 @@
 
 import { useState, useEffect, FormEvent, useRef } from 'react'
 import SpeechUpload from '../components/SpeechUpload'
-
-// 単語の型定義
-interface Word {
-  id: number
-  english: string
-  japanese: string
-  level: string
-  lastStudied?: string
-  correctCount?: number
-  incorrectCount?: number
-}
-
-// APIレスポンスの型定義
-interface ApiResponse {
-  content?: string
-}
-
+import { useParams } from 'next/navigation'
+import { Word } from '@prisma/client'
+import { callOpenai } from '../api/openai/callOpenai'
+import Test from '../components/Test'
 // 回答評価の型定義
 interface AnswerEvaluation {
   isCorrect: boolean
-  correctAnswer: string
   suggestion: string
   grammarCorrection?: string
   vocabularySuggestion?: string
   score: number
 }
 
-// 発音評価の結果の型定義
-interface PronunciationEvaluation {
-  recognizedText: string;
-  pronunciationScore: number;
-  accuracyScore: number;
-  fluencyScore: number;
-  completenessScore: number;
-  words: {
-    Word: string;
-    PronunciationScore: number;
-    Duration: number;
-    AccuracyScore?: number;
-  }[];
-  rawResult?: any;
-}
-
-export default function EnglishStudyPage() {
+export default function StudyPage() {
   // 状態管理
   const [currentWord, setCurrentWord] = useState<Word | null>(null)
   const [count, setCount] = useState<number>(0)
@@ -53,19 +23,28 @@ export default function EnglishStudyPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [dataLoading, setDataLoading] = useState<boolean>(true)
   const [japaneseExample, setJapaneseExample] = useState<string>('')
-  const [englishExample, setEnglishExample] = useState<string>('')
+  const [questionExample, setQuestionExample] = useState<string>('')
   const [showAnswer, setShowAnswer] = useState<boolean>(false)
   const [evaluation, setEvaluation] = useState<AnswerEvaluation | null>(null)
   const [words, setWords] = useState<Word[]>([])
   const [showPronunciationPractice, setShowPronunciationPractice] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const params = useParams() as Record<string, string | string[]>;
+  const language = params?.language as string
+  const languageMap: Record<string, string> = {
+    english: "英語",
+    chinese: "中国語",
+    french: "フランス語",
+  };
+
+  const showLanguage = languageMap[language] ?? "不明";
 
   // データベースから単語を取得
   const fetchWords = async () => {
     try {
       setDataLoading(true)
-      const response = await fetch('/api/words?language=english')
+      const response = await fetch(`/api/words?language=${language}`)
 
       if (!response.ok) {
         throw new Error('単語データの取得に失敗しました')
@@ -120,46 +99,23 @@ export default function EnglishStudyPage() {
 
     // 単語に基づいた例文を生成
     if (selectedWord) {
-      generateExampleSentence(selectedWord.english, selectedWord.level)
-    }
-  }
-
-  // OpenAI APIを呼び出す関数
-  const callOpenai = async (prompt: string): Promise<string> => {
-    try {
-      const response = await fetch('/api/openai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt })
-      })
-
-      if (!response.ok) {
-        throw new Error('ネットワークエラーが発生しました')
-      }
-
-      const data: ApiResponse = await response.json()
-      return data.content || ''
-    } catch (error) {
-      console.error('エラー:', error)
-      return ''
+      generateExampleSentence(selectedWord)
     }
   }
 
   // 例文の生成
-  const generateExampleSentence = async (englishWord: string, level: number) => {
+  const generateExampleSentence = async (word: Word) => {
     try {
       setIsLoading(true)
 
       // TOEIC 700点レベルに適した例文を生成
-      const examplePrompt = `難易度1から10の1ぐらいの、${englishWord}」を使った実用的な英文を1つ生成してください。日常生活での使用例が理想的です。英文のみを出力してください。`
+      const examplePrompt = `難易度1から10の1ぐらいの、${word.question}」を使った実用的な${showLanguage}の文を1つ生成してください。日常生活での使用例が理想的です。${showLanguage}の文のみを出力してください。`
 
       const generatedExample = await callOpenai(examplePrompt)
-      setEnglishExample(generatedExample)
+      setQuestionExample(generatedExample)
 
       // 日本語訳を取得
-      const japanesePrompt = `次の英文を自然な日本語に翻訳してください。翻訳のみを出力してください：${generatedExample}`
+      const japanesePrompt = `次の${showLanguage}文を自然な日本語に翻訳してください。翻訳のみを出力してください：${generatedExample}`
       const japaneseTranslation = await callOpenai(japanesePrompt)
       setJapaneseExample(japaneseTranslation)
 
@@ -196,7 +152,7 @@ export default function EnglishStudyPage() {
           if (word.id === wordId) {
             return {
               ...word,
-              lastStudied: new Date().toISOString(),
+              lastStudied: new Date(),
               correctCount: (word.correctCount || 0) + (isCorrect ? 1 : 0),
               incorrectCount: (word.incorrectCount || 0) + (isCorrect ? 0 : 1)
             }
@@ -211,14 +167,14 @@ export default function EnglishStudyPage() {
   }
 
   // ユーザーの回答を評価する
-  const evaluateAnswer = async (userAnswer: string, correctExample: string) => {
+  const evaluateAnswer = async (userAnswer: string, questionExample: string) => {
     if (!currentWord) return null
 
     const prompt = `
 あなたは、以下の日本語例文に対するユーザーの英訳を評価するAIです。
 
 日本語例文: ${japaneseExample.toLowerCase()}
-模範英訳: ${correctExample}
+模範英訳: ${questionExample}
 ユーザーの回答: ${userAnswer}
 
 次の「評価ポイント」に基づき、ユーザーの回答を具体的かつ厳密に評価してください。
@@ -239,7 +195,6 @@ export default function EnglishStudyPage() {
 {
   "score": 0~100,
   "isCorrect": true/false, // 81点以上ならtrue
-  "correctAnswer": "模範英訳",
   "suggestion": "ユーザーの回答に対する総合的な評価と改善案（日本語で具体的に記述）"
 }
 
@@ -261,19 +216,15 @@ export default function EnglishStudyPage() {
       // JSONパースに失敗した場合は手動で構築
       return {
         isCorrect: false,
-        correctAnswer: correctExample,
         suggestion: "回答を評価しました。詳細な評価情報は生成できませんでした。",
-        grammarCorrection: "",
-        vocabularySuggestion: ""
+        score: 0
       }
     } catch (error) {
       console.error('回答評価エラー:', error)
       return {
         isCorrect: false,
-        correctAnswer: correctExample,
         suggestion: "回答の評価中にエラーが発生しました。",
-        grammarCorrection: "",
-        vocabularySuggestion: ""
+        score: 0
       }
     }
   }
@@ -290,14 +241,14 @@ export default function EnglishStudyPage() {
     setIsLoading(true)
 
     // ユーザーの回答を評価
-    const evaluationResult = await evaluateAnswer(yourAnswer, englishExample)
+    const evaluationResult = await evaluateAnswer(yourAnswer, questionExample)
+
+    if (evaluationResult) {
+      setEvaluation(evaluationResult)
+    }
 
     // 回答を表示
     setShowAnswer(true)
-    setIsLoading(false)
-
-    // 発音練習を表示
-    setShowPronunciationPractice(true)
 
     // 学習状況を更新
     if (currentWord && evaluationResult) {
@@ -308,6 +259,10 @@ export default function EnglishStudyPage() {
         setCount(prev => prev + 1)
       }
     }
+
+    // 全ての処理が完了した後に発音練習を表示
+    setShowPronunciationPractice(true)
+    setIsLoading(false)
   }
 
   // 次の問題へ進む
@@ -366,7 +321,7 @@ export default function EnglishStudyPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <h1 className="text-gray-600 mt-2">
-            日本語の例文を英語に訳して、TOEIC頻出単語を効率的に学習しましょう。
+              日本語の例文を{showLanguage}に訳して、学習しましょう。
             </h1>
             <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-md font-medium">
               学習済み: {count} 単語
@@ -428,7 +383,7 @@ export default function EnglishStudyPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="answer" className="block text-sm font-medium text-gray-700 mb-2">
-                    あなたの回答（英語）
+                    あなたの回答（{showLanguage}）
                   </label>
                   <input
                     id="answer"
@@ -521,7 +476,7 @@ export default function EnglishStudyPage() {
                     </div>
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <span className="font-medium text-gray-700">模範解答: </span>
-                      <span className="text-green-600 font-medium">{evaluation.correctAnswer}</span>
+                      <span className="text-green-600 font-medium">{questionExample}</span>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <span className="font-medium text-gray-700">あなたの回答: </span>
@@ -545,7 +500,7 @@ export default function EnglishStudyPage() {
                   {showPronunciationPractice && (
                     <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
 
-                      <SpeechUpload sentences={evaluation.correctAnswer} />
+                      <SpeechUpload sentences={questionExample} />
                     </div>
                   )}
                 </div>
