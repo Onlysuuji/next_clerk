@@ -5,7 +5,7 @@ import SpeechUpload from '../components/SpeechUpload'
 import { useParams } from 'next/navigation'
 import { Word } from '@prisma/client'
 import { callOpenai } from '../api/openai/callOpenai'
-import Test from '../components/Test'
+
 // 回答評価の型定義
 interface AnswerEvaluation {
   isCorrect: boolean
@@ -362,7 +362,7 @@ export default function StudyPage() {
 
                   {/* 日本語例文 */}
                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-lg">
-                    {isLoading ? (
+                    {isLoading && !yourAnswer ? (
                       <div className="flex justify-center items-center h-12">
                         <div className="animate-pulse flex space-x-2">
                           <div className="h-2 w-2 bg-blue-400 rounded-full"></div>
@@ -500,7 +500,7 @@ export default function StudyPage() {
                   {showPronunciationPractice && (
                     <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
 
-                      <SpeechUpload sentences={questionExample} />
+                      <SpeechUpload sentences={questionExample} language={language} />
                     </div>
                   )}
                 </div>

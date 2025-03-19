@@ -3,7 +3,7 @@
 import { divide } from 'lodash';
 import { useState, useRef } from 'react';
 
-export default function SpeechUpload({ sentences }: { sentences: string }) {
+export default function SpeechUpload({ sentences, language }: { sentences: string, language: string }) {
     const [text, setText] = useState(sentences);
     const [result, setResult] = useState<any>(null);
     const [recording, setRecording] = useState(false);
@@ -135,7 +135,7 @@ export default function SpeechUpload({ sentences }: { sentences: string }) {
                         const response = await fetch('/api/speech', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ wav: base64Data, text })
+                            body: JSON.stringify({ wav: base64Data, text, language })
                         });
 
                         if (!response.ok) {

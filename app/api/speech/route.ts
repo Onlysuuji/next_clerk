@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server';
 
 const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || '';
 const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || 'eastus';
+const azure_language: { [key: string]: string } = {
+    "english": "en-US",
+    "chinese": "zh-CN",
+    "french": "fr-FR",
+};
 
 export async function GET() {
     console.log("📩 API: /api/speech にリクエストを受信GET");
@@ -14,7 +19,7 @@ export async function POST(req: Request, res: Response) {
 
     console.log("📩 API: /api/speech にリクエストを受信POST");
     try {
-        const { wav, text } = await req.json();
+        const { wav, text, language } = await req.json();
         if (!wav || !text) {
             return new Response(JSON.stringify({ error: 'Missing required fields: wav or text' }), {
                 status: 400,
@@ -30,7 +35,7 @@ export async function POST(req: Request, res: Response) {
         try {
             console.log("🚀 pronunciationAssessmentContinuousWithFile() を呼び出し");
 
-            assessmentResult = await pronunciationAssessmentContinuousWithFile(buffer, text);
+            assessmentResult = await pronunciationAssessmentContinuousWithFile(buffer, text, language);
 
             console.log("✅ pronunciationAssessmentContinuousWithFile() 完了:", assessmentResult);
 
@@ -54,7 +59,7 @@ export async function POST(req: Request, res: Response) {
     }
 }
 
-async function pronunciationAssessmentContinuousWithFile(wav: Buffer, text: string) {
+async function pronunciationAssessmentContinuousWithFile(wav: Buffer, text: string, language: string) {
     return new Promise((resolve, reject) => {
         console.log("🚀 pronunciationAssessmentContinuousWithFile() が呼ばれた");
 
@@ -63,8 +68,7 @@ async function pronunciationAssessmentContinuousWithFile(wav: Buffer, text: stri
 
         console.log("🔍 WAV データの長さ:", wav.length, "バイト");
 
-        speechConfig.speechRecognitionLanguage = "en-US";
-        //speechConfig.speechRecognitionLanguage = "zh-CH";
+        speechConfig.speechRecognitionLanguage = azure_language[language];
 
         const pronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig(
             text,
