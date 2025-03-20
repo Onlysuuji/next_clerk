@@ -8,7 +8,7 @@ export async function GET() {
     const words = await prisma.word.findMany({
       orderBy: { id: 'asc' }
     })
-    
+
     return NextResponse.json({ words })
   } catch (error) {
     console.error('単語取得エラー:', error)
@@ -22,7 +22,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const data = await request.json()
-    
+
     // バリデーション
     if (!data.english || !data.japanese) {
       return NextResponse.json(
@@ -30,14 +30,14 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    
+
     if (!data.userId) {
       return NextResponse.json(
         { error: 'ユーザーIDが必要です' },
         { status: 401 }
       )
     }
-    
+
     const word = await prisma.word.create({
       data: {
         english: data.english,
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         incorrectCount: 0
       }
     })
-    
+
     return NextResponse.json({ word })
   } catch (error) {
     console.error('単語作成エラー:', error)

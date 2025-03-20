@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import Dropdown from './Dropdown'
+import Dropdown from '@/components/layouts/Dropdown'
 import { UserButton, SignInButton, SignIn, useAuth, SignOutButton, SignedIn } from '@clerk/nextjs'
 import { Sign } from 'crypto'
 

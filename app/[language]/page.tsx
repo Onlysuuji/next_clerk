@@ -5,7 +5,9 @@ import SpeechUpload from '../../components/SpeechUpload'
 import { useParams } from 'next/navigation'
 import { Word } from '@prisma/client'
 import { callOpenai } from '../api/openai/callOpenai'
-
+import { LanguageProvider } from '@/context/LanguageContext'
+import StudyHeader from '@/components/StudyHeader'
+import NoWordsMessage from '@/components/NoWordsMessage'
 // 回答評価の型定義
 interface AnswerEvaluation {
   isCorrect: boolean
@@ -315,37 +317,18 @@ export default function StudyPage() {
   }
 
   return (
-    <div className="pt-24 min-h-screen bg-white">
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        {/* ヘッダーセクション */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-gray-600 mt-2">
-              日本語の例文を{showLanguage}に訳して、学習しましょう。
-            </h1>
-            <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-md font-medium">
-              学習済み: {count} 単語
-            </div>
-          </div>
-        </div>
+    <LanguageProvider {...{ language, showLanguage }}>
+      <div className="pt-24 min-h-screen bg-white">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+          {/* ヘッダーセクション */}
+          <StudyHeader count={count} />
 
-        {words.length === 0 ? (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-            <h3 className="text-lg font-medium text-yellow-700 mb-2">単語が登録されていません</h3>
-            <p className="text-yellow-600 mb-4">
-              学習するには、まず単語を登録してください。
-            </p>
-            <a
-              href="/english/register"
-              className="inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-            >
-              単語登録ページへ
-            </a>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* 問題カード */}
-            {currentWord && (
+          {words.length === 0 ? (
+            <NoWordsMessage />
+          ) : (
+            <div className="space-y-6">
+              {/* 問題カード */}
+
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                 {/* 進捗バー */}
                 <div className="h-1 bg-gray-100">
@@ -376,139 +359,140 @@ export default function StudyPage() {
                   </div>
                 </div>
               </div>
-            )}
 
-            {/* 回答フォーム */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="answer" className="block text-sm font-medium text-gray-700 mb-2">
-                    あなたの回答（{showLanguage}）
-                  </label>
-                  <input
-                    id="answer"
-                    type="text"
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    value={yourAnswer}
-                    onChange={(e) => setYourAnswer(e.target.value)}
-                    ref={inputRef}
-                    autoCorrect="off"
-                    placeholder="例文の英語訳を入力してください..."
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    autoComplete="off"
-                    disabled={showAnswer || isLoading}
-                  />
-                </div>
 
-                <div className="flex justify-between">
-                  <button
-                    type={showAnswer ? 'button' : 'submit'}
-                    onClick={showAnswer ? handleNextQuestion : undefined}
-                    className={`
-                      px-5 py-2 rounded-md font-medium transition-all duration-300 cursor-pointer
-                      ${showAnswer
-                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                        : 'bg-green-500 hover:bg-green-600 text-white'} 
-                      ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
-                    `}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        準備中...
-                      </span>
-                    ) : (
-                      showAnswer ? '次の問題へ' : '答え合わせ'
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleDeleteWord}
-                    className="px-5 py-2 bg-red-100 text-red-600 rounded-md font-medium hover:bg-red-200 transition-all duration-300 cursor-pointer"
-                    disabled={isLoading || !currentWord}
-                  >
-                    <span className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      削除
-                    </span>
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* 回答結果 */}
-            {showAnswer && evaluation && currentWord && (
-              <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-                <div className={`py-3 px-6 ${evaluation.isCorrect ? 'bg-green-50' : 'bg-yellow-50'}`}>
-                  <h3 className={`font-medium text-lg flex items-center ${evaluation.isCorrect ? 'text-green-700' : 'text-yellow-700'}`}>
-                    {evaluation.isCorrect ? (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        正解！
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        惜しい！
-                      </>
-                    )}
-                  </h3>
-                </div>
-
-                <div className="p-6 space-y-5">
-                  {/* 問題と回答 */}
-                  <div className="space-y-3">
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <span className="font-medium text-gray-700">日本語例文: </span>
-                      <span className="text-gray-800">{japaneseExample}</span>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <span className="font-medium text-gray-700">模範解答: </span>
-                      <span className="text-green-600 font-medium">{questionExample}</span>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <span className="font-medium text-gray-700">あなたの回答: </span>
-                      {yourAnswer}
-                    </div>
+              {/* 回答フォーム */}
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="answer" className="block text-sm font-medium text-gray-700 mb-2">
+                      あなたの回答（{showLanguage}）
+                    </label>
+                    <input
+                      id="answer"
+                      type="text"
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      value={yourAnswer}
+                      onChange={(e) => setYourAnswer(e.target.value)}
+                      ref={inputRef}
+                      autoCorrect="off"
+                      placeholder="例文の英語訳を入力してください..."
+                      autoCapitalize="off"
+                      spellCheck="false"
+                      autoComplete="off"
+                      disabled={showAnswer || isLoading}
+                    />
                   </div>
 
-                  {/* 評価とアドバイス */}
-                  <div>
-                    <div className="p-4 bg-white rounded-lg border border-gray-200 space-y-4">
-                      <div className="pl-4 border-l-2 border-blue-200">
-                        <h5 className="font-medium text-blue-700 mb-1">文法の修正:</h5>
-                        <p className="text-gray-600">{evaluation.suggestion}</p>
-                        <p className="text-gray-600">{evaluation.score}</p>
+                  <div className="flex justify-between">
+                    <button
+                      type={showAnswer ? 'button' : 'submit'}
+                      onClick={showAnswer ? handleNextQuestion : undefined}
+                      className={`
+                        px-5 py-2 rounded-md font-medium transition-all duration-300 cursor-pointer
+                        ${showAnswer
+                          ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                          : 'bg-green-500 hover:bg-green-600 text-white'} 
+                        ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
+                      `}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          準備中...
+                        </span>
+                      ) : (
+                        showAnswer ? '次の問題へ' : '答え合わせ'
+                      )}
+                    </button>
 
+                    <button
+                      type="button"
+                      onClick={handleDeleteWord}
+                      className="px-5 py-2 bg-red-100 text-red-600 rounded-md font-medium hover:bg-red-200 transition-all duration-300 cursor-pointer"
+                      disabled={isLoading || !currentWord}
+                    >
+                      <span className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        削除
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* 回答結果 */}
+              {showAnswer && evaluation && currentWord && (
+                <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                  <div className={`py-3 px-6 ${evaluation.isCorrect ? 'bg-green-50' : 'bg-yellow-50'}`}>
+                    <h3 className={`font-medium text-lg flex items-center ${evaluation.isCorrect ? 'text-green-700' : 'text-yellow-700'}`}>
+                      {evaluation.isCorrect ? (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          正解！
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          惜しい！
+                        </>
+                      )}
+                    </h3>
+                  </div>
+
+                  <div className="p-6 space-y-5">
+                    {/* 問題と回答 */}
+                    <div className="space-y-3">
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <span className="font-medium text-gray-700">日本語例文: </span>
+                        <span className="text-gray-800">{japaneseExample}</span>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <span className="font-medium text-gray-700">模範解答: </span>
+                        <span className="text-green-600 font-medium">{questionExample}</span>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <span className="font-medium text-gray-700">あなたの回答: </span>
+                        {yourAnswer}
                       </div>
                     </div>
-                  </div>
 
-                  {/* 発音練習セクション */}
-                  {showPronunciationPractice && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    {/* 評価とアドバイス */}
+                    <div>
+                      <div className="p-4 bg-white rounded-lg border border-gray-200 space-y-4">
+                        <div className="pl-4 border-l-2 border-blue-200">
+                          <h5 className="font-medium text-blue-700 mb-1">文法の修正:</h5>
+                          <p className="text-gray-600">{evaluation.suggestion}</p>
+                          <p className="text-gray-600">{evaluation.score}</p>
 
-                      <SpeechUpload sentences={questionExample} language={language} />
+                        </div>
+                      </div>
                     </div>
-                  )}
+
+                    {/* 発音練習セクション */}
+                    {showPronunciationPractice && (
+                      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+
+                        <SpeechUpload text={questionExample} />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
-    </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+    </LanguageProvider>
   )
 } 
