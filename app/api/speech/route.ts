@@ -20,6 +20,7 @@ export async function POST(req: Request, res: Response) {
     console.log("📩 API: /api/speech にリクエストを受信POST");
     try {
         const { wav, text, language } = await req.json();
+        console.log("🔍 受信データ:", { text, language });
         if (!wav || !text) {
             return new Response(JSON.stringify({ error: 'Missing required fields: wav or text' }), {
                 status: 400,

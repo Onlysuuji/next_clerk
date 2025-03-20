@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, FormEvent, useRef } from 'react'
-import SpeechUpload from '../components/SpeechUpload'
+import SpeechUpload from '../../components/SpeechUpload'
 import { useParams } from 'next/navigation'
 import { Word } from '@prisma/client'
 import { callOpenai } from '../api/openai/callOpenai'
