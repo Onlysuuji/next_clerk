@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { words } from "../../../../data/words/toeic700/route"; // 🔥 データファイルをインポート
+import { words } from "../../../../../data/words/toeic700/route"; // 🔥 データファイルをインポート
 
 const prisma = new PrismaClient();
 
