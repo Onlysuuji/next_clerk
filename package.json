@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.12.4",
-    "@prisma/client": "^6.4.1",
+    "@prisma/client": "^6.5.0",
     "@types/lodash": "^4.17.16",
     "lodash": "^4.17.21",
     "microsoft-cognitiveservices-speech-sdk": "^1.42.0",
-    "next": "15.2.1",
+    "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -23,7 +23,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "prisma": "^6.4.1",
+    "prisma": "^6.5.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
