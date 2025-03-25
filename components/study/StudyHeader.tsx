@@ -1,7 +1,4 @@
-import { useLanguage } from '@/context/LanguageContext';
-
-export default function StudyHeader({ count }: { count: number }) {
-    const { showLanguage } = useLanguage();
+export default function StudyHeader({ count, showLanguage }: { count: number, showLanguage: string }) {
     return (
         <div className="mb-8">
             <div className="flex items-center justify-between">

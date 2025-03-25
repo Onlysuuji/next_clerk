@@ -1,12 +1,9 @@
 'use client'
 
-import { divide } from 'lodash';
 import { useState, useRef } from 'react';
 import convertWebMToWav from '@/utils/WebMToWav';
-import { useLanguage } from '@/context/LanguageContext';
 
-export default function SpeechUpload({ text }: { text: string }) {
-    const { language } = useLanguage();
+export default function SpeechUpload({ text, language }: { text: string, language: string }) {
     const [result, setResult] = useState<any>(null);
     const [recording, setRecording] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
