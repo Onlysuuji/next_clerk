@@ -51,25 +51,11 @@ const wordPack: Record<string, LanguagePack[]> = {
                     link: '/english/package/toeic/500'
                 },
                 {
-                    id: 'toeic600',
-                    tag: 'TOEIC600',
-                    description: 'TOEIC600の目標スコアに合わせた単語パック',
-                    imageUrl: 'https://placehold.co/400x200?text=TOEIC600',
-                    link: '/english/package/toeic/600'
-                },
-                {
                     id: 'toeic700',
                     tag: 'TOEIC700',
                     description: 'TOEIC700の目標スコアに合わせた単語パック',
                     imageUrl: 'https://placehold.co/400x200?text=TOEIC700',
                     link: '/english/package/toeic/700'
-                },
-                {
-                    id: 'toeic800',
-                    tag: 'TOEIC800',
-                    description: 'TOEIC800の目標スコアに合わせた単語パック',
-                    imageUrl: 'https://placehold.co/400x200?text=TOEIC800',
-                    link: '/english/package/toeic/800'
                 },
                 {
                     id: 'toeic900',
@@ -132,6 +118,66 @@ const wordPack: Record<string, LanguagePack[]> = {
                     description: 'HSK6の目標スコアに合わせた単語パック',
                     imageUrl: 'https://placehold.co/400x200?text=HSK6',
                     link: '/chinese/package/hsk/6'
+                },
+            ]
+        },
+    ],
+    french: [
+        {
+            id: 'DELF',
+            tag: 'フランス語',
+            description: 'フランス語の目標スコアに合わせた単語パック',
+            imageUrl: 'https://placehold.co/400x200?text=French',
+            link: '/french/package/fr',
+            subpack: [
+                {
+                    id: 'A1',
+                    tag: 'A1',
+                    description: 'A1の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=French',
+                    link: '/french/package/fr/A1'
+                },
+                {
+                    id: 'A2',
+                    tag: 'A2',
+                    description: 'A2の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=French',
+                    link: '/french/package/fr/A2'
+                },
+                {
+                    id: 'B1',
+                    tag: 'B1',
+                    description: 'B1の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=French',
+                    link: '/french/package/fr/B1'
+                },
+                {
+                    id: 'B2',
+                    tag: 'B2',
+                    description: 'B2の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=French',
+                    link: '/french/package/fr/B2'
+                },
+                {
+                    id: 'C1',
+                    tag: 'C1',
+                    description: 'C1の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=French',
+                    link: '/french/package/fr/C1'
+                },
+                {
+                    id: 'C1',
+                    tag: 'C1',
+                    description: 'C1の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=French',
+                    link: '/french/package/fr/C1'
+                },
+                {
+                    id: 'C2',
+                    tag: 'C2',
+                    description: 'C2の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=French',
+                    link: '/french/package/fr/C2'
                 },
             ]
         },

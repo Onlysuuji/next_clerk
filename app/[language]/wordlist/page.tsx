@@ -326,7 +326,7 @@ export default function WordListPage() {
                         <div>
                           <div>{new Date(word.lastStudied).toLocaleDateString()}</div>
                           <div className="text-xs text-gray-400">
-                            {getDaysSinceLastStudied(word.lastStudied)}日前
+                            {getDaysSinceLastStudied(word.lastStudied.toString())}日前
                           </div>
                         </div>
                       ) : (
