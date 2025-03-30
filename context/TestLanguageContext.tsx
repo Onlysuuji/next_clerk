@@ -13,7 +13,16 @@ type LanguageContextType = {
 
 export type LanguagePack = {
     id: string;
-    title: string;
+    tag: string;
+    description: string;
+    imageUrl: string;
+    link: string;
+    subpack?: LanguageSubPack[];
+}
+
+export type LanguageSubPack = {
+    id: string;
+    tag: string;
     description: string;
     imageUrl: string;
     link: string;
@@ -25,27 +34,80 @@ const languageMap: Record<string, string> = {
     french: "フランス語",
 };
 
-const languagePack: Record<string, LanguagePack[]> = {
+const wordPack: Record<string, LanguagePack[]> = {
     english: [
         {
             id: 'toeic',
-            title: 'TOEIC',
+            tag: 'TOEIC',
             description: 'TOEICの目標スコアに合わせた単語パック',
             imageUrl: 'https://placehold.co/400x200?text=TOEIC',
-            link: '/english/package/toeic'
+            link: '/english/package/toeic',
+            subpack: [
+                {
+                    id: 'toeic500',
+                    tag: 'TOEIC500',
+                    description: 'TOEIC500の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=TOEIC500',
+                    link: '/english/package/toeic/500'
+                },
+                {
+                    id: 'toeic600',
+                    tag: 'TOEIC600',
+                    description: 'TOEIC600の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=TOEIC600',
+                    link: '/english/package/toeic/600'
+                },
+                {
+                    id: 'toeic700',
+                    tag: 'TOEIC700',
+                    description: 'TOEIC700の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=TOEIC700',
+                    link: '/english/package/toeic/700'
+                },
+                {
+                    id: 'toeic800',
+                    tag: 'TOEIC800',
+                    description: 'TOEIC800の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=TOEIC800',
+                    link: '/english/package/toeic/800'
+                },
+                {
+                    id: 'toeic900',
+                    tag: 'TOEIC900',
+                    description: 'TOEIC900の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=TOEIC900',
+                    link: '/english/package/toeic/900'
+                }
+            ]
         },
         {
             id: 'eiken',
-            title: '英検',
+            tag: '英検',
             description: '英検の級別に合わせた単語パック',
-            imageUrl: 'https://placehold.co/400x200?text=英検',
-            link: '/english/package'
+            imageUrl: 'https://placehold.co/400x200?text=Eiken',
+            link: '/english/package/eiken',
+            subpack: [
+                {
+                    id: 'eiken3',
+                    tag: '英検3級',
+                    description: '英検3級の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=Eiken3',
+                    link: '/english/package/eiken/3'
+                },
+                {
+                    id: 'eiken4',
+                    tag: '英検4級',
+                    description: '英検4級の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=Eiken4',
+                    link: '/english/package/eiken/4'
+                },
+            ]
         },
     ],
     chinese: [
         {
             id: 'hsk',
-            title: 'HSK',
+            tag: 'HSK',
             description: 'HSKの級別に合わせた単語パック',
             imageUrl: 'https://placehold.co/400x200?text=HSK',
             link: '/chinese/package/hsk'
@@ -67,16 +129,16 @@ export const TestLanguageProvider = ({ children }: { children: ReactNode }) => {
             const metadataLang = user.publicMetadata.language as string;
             setLanguage(metadataLang);
             setShowLanguage(languageMap[metadataLang]);
-            setWordPacks(languagePack[metadataLang] || []);
+            setWordPacks(wordPack[metadataLang] || []);
         }
     }, [user]);
 
     useEffect(() => {
-        if (params.language && user) {
+        if (params.language && user && languageMap[params.language as string]) {
             const lang = params.language as string
             setLanguage(lang)
             setShowLanguage(languageMap[lang])
-            setWordPacks(languagePack[lang] || [])
+            setWordPacks(wordPack[lang] || [])
             fetch('/api/set-language', {
                 method: 'POST',
                 body: JSON.stringify({ language: lang, userId: user.id }),

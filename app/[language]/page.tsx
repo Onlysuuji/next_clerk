@@ -81,7 +81,7 @@ export default function StudyPage() {
   }
 
   return (
-    <div className="pt-24 min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {/* ヘッダーセクション */}
         <StudyHeader />

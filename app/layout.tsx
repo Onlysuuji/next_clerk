@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ClerkProvider>
             <TestLanguageProvider>
               <Header />
-              <main>
+              <main className="py-24">
                 {children}
               </main>
             </TestLanguageProvider>

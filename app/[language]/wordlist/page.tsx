@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Word } from '@prisma/client';
+import { useTestLanguage } from '@/context/TestLanguageContext';
 
 export default function WordListPage() {
   // 状態管理
@@ -14,18 +15,19 @@ export default function WordListPage() {
   const [sortBy, setSortBy] = useState<string>('level')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const router = useRouter()
+  const { language } = useTestLanguage()
 
   // データをロードする
   useEffect(() => {
     const fetchWords = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/words?language=english')
-        
+        const response = await fetch(`/api/words?language=${language}`)
+
         if (!response.ok) {
           throw new Error('単語データの取得に失敗しました')
         }
-        
+
         const data = await response.json()
         setWords(data.words)
       } catch (error) {
@@ -73,35 +75,35 @@ export default function WordListPage() {
 
   // フィルタリングと検索を適用した単語リスト
   const filteredWords = words
-    .filter(word => 
+    .filter(word =>
       // 検索語でフィルタリング
-      (word.english.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       word.japanese.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (word.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        word.japanese.toLowerCase().includes(searchTerm.toLowerCase())) &&
       // レベルでフィルタリング
-      (levelFilter === 'all' || word.level === levelFilter)
+      (levelFilter === 'all' || word.tag === levelFilter)
     )
     .sort((a, b) => {
       // ソート処理
       let compareA: any = a[sortBy as keyof Word]
       let compareB: any = b[sortBy as keyof Word]
-      
+
       // nullやundefinedを処理
       if (compareA === null || compareA === undefined) compareA = ''
       if (compareB === null || compareB === undefined) compareB = ''
-      
+
       // 日付の場合は変換
       if (sortBy === 'lastStudied' && compareA && compareB) {
         compareA = new Date(compareA).getTime()
         compareB = new Date(compareB).getTime()
       }
-      
+
       // 数値または文字列としてソート
       if (typeof compareA === 'number' && typeof compareB === 'number') {
         return sortDirection === 'asc' ? compareA - compareB : compareB - compareA
       } else {
         // 文字列比較
-        return sortDirection === 'asc' 
-          ? String(compareA).localeCompare(String(compareB)) 
+        return sortDirection === 'asc'
+          ? String(compareA).localeCompare(String(compareB))
           : String(compareB).localeCompare(String(compareA))
       }
     })
@@ -111,7 +113,7 @@ export default function WordListPage() {
     const correct = word.correctCount || 0
     const incorrect = word.incorrectCount || 0
     const total = correct + incorrect
-    
+
     if (total === 0) return 0
     return Math.floor((correct / total) * 100)
   }
@@ -119,18 +121,18 @@ export default function WordListPage() {
   // 最後に学習した日からの経過日数を計算
   const getDaysSinceLastStudied = (lastStudied?: string) => {
     if (!lastStudied) return null
-    
+
     const lastDate = new Date(lastStudied)
     const today = new Date()
     const diffTime = today.getTime() - lastDate.getTime()
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-    
+
     return diffDays
   }
 
   // レベル表示用の色を取得
   const getLevelColor = (level: string) => {
-    switch(level) {
+    switch (level) {
       case 'easy': return 'bg-green-100 text-green-800'
       case 'medium': return 'bg-blue-100 text-blue-800'
       case 'hard': return 'bg-red-100 text-red-800'
@@ -159,8 +161,8 @@ export default function WordListPage() {
             <h1 className="text-2xl font-bold text-gray-800">
               英単語リスト
             </h1>
-            <Link 
-              href="/english/register" 
+            <Link
+              href="/english/register"
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
             >
               単語を追加
@@ -236,7 +238,7 @@ export default function WordListPage() {
             <table className="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('english')}
                   >
@@ -249,7 +251,7 @@ export default function WordListPage() {
                       )}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('japanese')}
                   >
@@ -262,7 +264,7 @@ export default function WordListPage() {
                       )}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('level')}
                   >
@@ -275,7 +277,7 @@ export default function WordListPage() {
                       )}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('lastStudied')}
                   >
@@ -288,7 +290,7 @@ export default function WordListPage() {
                       )}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('correctCount')}
                   >
@@ -310,14 +312,14 @@ export default function WordListPage() {
                 {filteredWords.map((word) => (
                   <tr key={word.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {word.english}
+                      {word.question}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {word.japanese}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(word.level)}`}>
-                        {word.level === 'easy' ? '簡単' : word.level === 'medium' ? '普通' : '難しい'}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(word.tag)}`}>
+                        {word.tag === 'easy' ? '簡単' : word.tag === 'medium' ? '普通' : '難しい'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -337,8 +339,8 @@ export default function WordListPage() {
                         <div>
                           <div className="flex items-center">
                             <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
-                              <div 
-                                className="bg-green-500 h-2 rounded-full" 
+                              <div
+                                className="bg-green-500 h-2 rounded-full"
                                 style={{ width: `${calculateProgress(word)}%` }}
                               ></div>
                             </div>
@@ -384,10 +386,10 @@ export default function WordListPage() {
             <div className="bg-white p-3 rounded-lg border border-blue-100">
               <div className="text-sm text-gray-500">正解率</div>
               <div className="text-xl font-bold text-yellow-700">
-                {words.length > 0 ? 
+                {words.length > 0 ?
                   Math.floor(
-                    (words.reduce((acc, word) => acc + (word.correctCount || 0), 0) / 
-                    words.reduce((acc, word) => acc + (word.correctCount || 0) + (word.incorrectCount || 0), 0)) * 100
+                    (words.reduce((acc, word) => acc + (word.correctCount || 0), 0) /
+                      words.reduce((acc, word) => acc + (word.correctCount || 0) + (word.incorrectCount || 0), 0)) * 100
                   ) || 0 : 0}%
               </div>
             </div>
