@@ -3,13 +3,19 @@
 import { useState, useRef } from 'react';
 import { useTestLanguage } from '@/context/TestLanguageContext';
 import convertWebMToWav from '@/utils/WebMToWav';
+import pinyin from "pinyin";
 
-export default function SpeechUpload({ text }: { text: string }) {
+export default function SpeechUpload({ text, children }: { text: string, children: React.ReactNode }) {
     const { language } = useTestLanguage()
     const [result, setResult] = useState<any>(null);
     const [recording, setRecording] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
+    const pinyinText = language === "chinese" ? pinyin(text, {
+        style: pinyin.STYLE_TONE, // 声調付きのピンイン
+        heteronym: false // 同音異義語を表示しない
+    }).flat().join(' ') : ""
+
 
     // 🎤 録音開始処理
     const startRecording = async () => {
@@ -112,32 +118,38 @@ export default function SpeechUpload({ text }: { text: string }) {
             <h1>発音評価</h1>
 
             <div className="p-4 bg-white rounded-lg border border-blue-100 mb-4">
+
+                <p className='text-lg font-medium text-blue-800'>{pinyinText}</p>
                 <p className='text-lg font-medium text-blue-800'>{text}</p>
             </div>
-            <div
-                className={`p-4 rounded-lg w-1/4 text-center cursor-pointer transition-all duration-300 ${recording
-                    ? 'bg-reg-100 border-2 border-red-300 hover:bg-reg-200'
-                    : 'bg-green-100 border-2 border-green-300 hover:bg-green-200'
-                    }`}
-            >
-                {recording ? (
-                    <button
-                        onClick={stopRecording}
-                        className="cursor-pointer text-red-500 focus:outline-none"
-                        aria-label="録音停止"
-                    >
-                        🛑 録音停止
-                    </button>
-                ) : (
-                    <button
-                        onClick={startRecording}
-                        className="cursor-pointer focus:outline-none"
-                        aria-label="録音開始"
-                    >
-                        🎤 録音開始
-                    </button>
-                )}
+            <div className='flex justify-between'>
+                <div
+                    className={`p-4 rounded-lg w-1/4 text-center cursor-pointer transition-all duration-300 ${recording
+                        ? 'bg-reg-100 border-2 border-red-300 hover:bg-reg-200'
+                        : 'bg-green-100 border-2 border-green-300 hover:bg-green-200'
+                        }`}
+                >
+                    {recording ? (
+                        <button
+                            onClick={stopRecording}
+                            className="cursor-pointer text-red-500 focus:outline-none"
+                            aria-label="録音停止"
+                        >
+                            🛑 録音停止
+                        </button>
+                    ) : (
+                        <button
+                            onClick={startRecording}
+                            className="cursor-pointer focus:outline-none"
+                            aria-label="録音開始"
+                        >
+                            🎤 録音開始
+                        </button>
+                    )}
+                </div>
+                {children}
             </div>
+
 
             <h2>評価結果</h2>
             {result && !result.accuracyScore && (<div className='text-red-300'>音声エラー</div>)}

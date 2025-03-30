@@ -17,18 +17,19 @@ export const useGenerateExample = () => {
             setIsLoadingExample(true)
 
             // TOEIC 700点レベルに適した例文を生成
-            const examplePrompt = `難易度1から10の1ぐらいの、${word.question}」を使った実用的な${showLanguage}の文を1つ生成してください。日常生活での使用例が理想的です。${showLanguage}の文のみを出力してください。`
+            const examplePrompt = `${word.question}の単語を使って、難易度1レベルの実用的な ${showLanguage} の文を1つ生成してください。日常生活（買い物・食事・移動など）で使うシンプルな例が理想です。文章のみを出力してください。`
             console.log("examplePrompt is", examplePrompt)
-            const generatedExample = await callOpenai(examplePrompt)
-            console.log("generatedExample is", generatedExample)
-            setQuestionExample(generatedExample)
+            const questionExample = await callOpenai(examplePrompt)
+            console.log("questionExample is", questionExample)
+            setQuestionExample(questionExample)
 
             // 日本語訳を取得
-            const japanesePrompt = `次の${showLanguage}文を自然な日本語に翻訳してください。翻訳のみを出力してください：${generatedExample}`
+            const japanesePrompt = `${questionExample} を自然に翻訳してください。翻訳のみを返してください。`
             console.log("japanesePrompt is", japanesePrompt)
             const japaneseTranslation = await callOpenai(japanesePrompt)
             console.log("japaneseTranslation is", japaneseTranslation)
             setJapaneseExample(japaneseTranslation)
+            return questionExample
 
         } catch (error) {
             console.error('例文生成エラー:', error)

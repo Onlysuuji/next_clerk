@@ -19,7 +19,7 @@ export default function Header() {
     }
 
     return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 flex h-20 justify-between shadow-[0_0_64px_0_rgba(0,0,0,0.07)] border-b-4 border-gray-100 bg-white 'w-full'`}>
+        <nav className={`top-0 left-0 right-0 flex h-20 justify-between shadow-[0_0_64px_0_rgba(0,0,0,0.07)] border-b-4 border-gray-100 bg-white w-full`}>
             <div className="flex justify-between md:gap-10 items-center">
                 <div className="px-5">
                     <Link href="/" className="flex flex-row items-center text-black hover:text-gray-600 transition-colors duration-300 cursor-pointer">

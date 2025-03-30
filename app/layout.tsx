@@ -28,8 +28,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="flex flex-col min-h-screen">
           <ClerkProvider>
             <TestLanguageProvider>
-              <Header />
-              <main className="py-24">
+              <main className="flex flex-col min-h-screen gap-3">
+                <Header />
                 {children}
               </main>
             </TestLanguageProvider>

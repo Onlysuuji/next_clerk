@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent, useEffect } from 'react'
+import { useState, FormEvent, useEffect, useRef } from 'react'
 import StudyHeader from '@/components/study/StudyHeader'
 import NoWordMessage from '@/components/study/NoWordMessage'
 import QuestionCard from '@/components/study/QuestionCard'
@@ -11,13 +11,22 @@ import { useFetchWord } from '@/hooks/fetchWord'
 import { useUpdateWord } from '@/hooks/updateWord'
 import { useTestLanguage } from '@/context/TestLanguageContext'
 import { useEvaluate } from '@/components/study/useEvaluate'
-
+import SpeechUpload from '@/components/SpeechUpload'
+import TextToSpeech from '@/components/study/TextToSpeech'
+import StudyButton from '@/components/study/StudyButton'
+import DeleteButton from '@/components/study/DeleteButton'
+import { useFetchAudioData } from '@/hooks/fetchAudioData'
+import { VOICE_OPTIONS } from '@/constants/VoiceOptions'
 export default function StudyPage() {
   // 状態管理
   const [yourAnswer, setYourAnswer] = useState<string>('')
   const [showAnswer, setShowAnswer] = useState<boolean>(false)
-  const [showPronunciationPractice, setShowPronunciationPractice] = useState(false);
   const { language } = useTestLanguage()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [voice, setVoice] = useState(VOICE_OPTIONS[language]?.[0]?.id || "");
+
+  const { fetchAudioData, audioUrl } = useFetchAudioData()
+
 
   const { word, isFetchingWord, wordExists, fetchWord } = useFetchWord()
 
@@ -37,51 +46,62 @@ export default function StudyPage() {
   }, [language])
 
   useEffect(() => {
-    if (word && evaluation) {
-      setShowAnswer(true)
-      updateWord(word.id, evaluation.isCorrect)
-      setShowPronunciationPractice(true)
+    console.log("voice", voice)
+    if (voice && questionExample) {
+      console.log("fetchAudioData in voiceUseEffect")
+      fetchAudioData(questionExample, language, voice)
     }
-  }, [evaluation])
+  }, [voice])
 
+  const handleNextQuestion = async () => {
+    try {
+      // ✅ 入力・評価の初期化
+      setYourAnswer("");
+      setEvaluation(null);
+      setShowAnswer(false);
 
-  useEffect(() => {
-    if (word) {
-      setShowAnswer(false)
-      console.log("単語取得完了")
-      console.log("word is", word)
-      console.log(word.question)
-      generateExample(word)
+      // ✅ エラー処理付きで単語取得
+      const word = await fetchWord();
+      if (!word) {
+        throw new Error("単語の取得に失敗しました");
+      }
 
+      // ✅ 例文生成（エラー処理付き）
+      const result = await generateExample(word);
+      const questionExample = result || "";
+
+      // ✅ 音声データの取得
+      const selectedVoice = voice || VOICE_OPTIONS[language]?.[0]?.id || "";
+      if (questionExample) {
+        fetchAudioData(questionExample, language, selectedVoice);
+      } else {
+        console.warn("例文が生成されませんでした。音声は取得されません。");
+      }
+
+      // ✅ 入力欄にフォーカス
+      inputRef.current?.focus();
+    } catch (error) {
+      console.error("エラーが発生しました:", error);
     }
+  };
 
-  }, [word])
-
-  // 次の問題へ進む
-  const handleNextQuestion = () => {
-    console.log("初期化中")
-    setYourAnswer('')
-    setEvaluation(null)
-    setShowPronunciationPractice(false)
-    console.log("初期化完了")
-    console.log("単語取得")
-    fetchWord()
-  }
 
   // フォーム送信時の処理
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const handleAnswerCheck = async () => {
     if (yourAnswer.trim() === '') {
       alert(`回答を入力してください${questionExample}, ${japaneseExample}`)
       return
     }
 
-    evaluate(yourAnswer, questionExample, japaneseExample)
-
+    const evaluation = await evaluate(yourAnswer, questionExample, japaneseExample)
+    setShowAnswer(true)
+    if (word?.id) {
+      updateWord(word.id, evaluation.isCorrect)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white">
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {/* ヘッダーセクション */}
         <StudyHeader />
@@ -99,16 +119,26 @@ export default function StudyPage() {
 
             {/* 回答フォーム */}
             <AnswerForm
-              word={word}
               yourAnswer={yourAnswer}
               setYourAnswer={setYourAnswer}
-              handleSubmit={handleSubmit}
-              handleNextQuestion={handleNextQuestion}
-              handleDeleteWord={deleteWord}
               isLoadingExample={isLoadingExample}
-              isEvaluating={isEvaluating}
               showAnswer={showAnswer}
-            />
+              inputRef={inputRef}
+            >
+
+              <div className="flex justify-between h-full">
+                <StudyButton
+                  showAnswer={showAnswer}
+                  handleNextQuestion={handleNextQuestion}
+                  handleAnswerCheck={handleAnswerCheck}
+                  isLoadingExample={isLoadingExample}
+                  isEvaluating={isEvaluating}
+                />
+
+                <TextToSpeech text={questionExample} audioUrl={audioUrl} voice={voice} setVoice={setVoice} />
+                <DeleteButton deleteWord={deleteWord} isLoadingExample={isLoadingExample} word={word} />
+              </div>
+            </AnswerForm>
 
             {/* 回答結果 */}
             {evaluation && showAnswer && (
@@ -117,12 +147,19 @@ export default function StudyPage() {
                 japaneseExample={japaneseExample}
                 questionExample={questionExample}
                 yourAnswer={yourAnswer}
-                showPronunciationPractice={showPronunciationPractice}
-              />
+              >
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+
+                  <SpeechUpload text={questionExample} >
+                    <TextToSpeech text={questionExample} audioUrl={audioUrl} voice={voice} setVoice={setVoice} />
+                  </SpeechUpload>
+                </div>
+              </Evaluation>
             )}
           </div>
-        )}
-      </main>
-    </div>
+        )
+        }
+      </main >
+    </div >
   )
 } 

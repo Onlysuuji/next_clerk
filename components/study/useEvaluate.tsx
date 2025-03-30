@@ -21,6 +21,7 @@ export const useEvaluate = () => {
         const evaluation = await evaluateAnswer(userAnswer, questionExample, japaneseExample)
         setEvaluation(evaluation)
         setIsEvaluating(false)
+        return evaluation
     }
     return { evaluation, isEvaluating, setEvaluation, evaluate }
 }

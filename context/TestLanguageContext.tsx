@@ -110,7 +110,30 @@ const wordPack: Record<string, LanguagePack[]> = {
             tag: 'HSK',
             description: 'HSKの級別に合わせた単語パック',
             imageUrl: 'https://placehold.co/400x200?text=HSK',
-            link: '/chinese/package/hsk'
+            link: '/chinese/package/hsk',
+            subpack: [
+                {
+                    id: 'hsk4',
+                    tag: 'HSK4',
+                    description: 'HSK4の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=HSK4',
+                    link: '/chinese/package/hsk/4'
+                },
+                {
+                    id: 'hsk5',
+                    tag: 'HSK5',
+                    description: 'HSK5の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=HSK5',
+                    link: '/chinese/package/hsk/5'
+                },
+                {
+                    id: 'hsk6',
+                    tag: 'HSK6',
+                    description: 'HSK6の目標スコアに合わせた単語パック',
+                    imageUrl: 'https://placehold.co/400x200?text=HSK6',
+                    link: '/chinese/package/hsk/6'
+                },
+            ]
         },
     ],
 };
@@ -118,11 +141,11 @@ const wordPack: Record<string, LanguagePack[]> = {
 export const TestLanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const TestLanguageProvider = ({ children }: { children: ReactNode }) => {
-    const [language, setLanguage] = useState<string>("");
+    const { user } = useUser()
+    const [language, setLanguage] = useState<string>(user?.publicMetadata?.language as string | "");
     const [showLanguage, setShowLanguage] = useState<string>("");
     const [wordPacks, setWordPacks] = useState<LanguagePack[]>([]);
     const params = useParams()
-    const { user } = useUser()
 
     useEffect(() => {
         if (user?.publicMetadata?.language) {

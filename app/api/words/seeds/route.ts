@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { clerkClient, currentUser } from "@clerk/nextjs/server"
-import { toeic600 } from "../../../../data/words/toeic600";
+import { toeic500 } from "../../../../data/words/toeic500";
 import { toeic700 } from "../../../../data/words/toeic700";
-import { toeic800 } from "../../../../data/words/toeic800";
+import { toeic900 } from "../../../../data/words/toeic900";
+import { hsk4 } from "../../../../data/words/hsk4";
+import { hsk5 } from "../../../../data/words/hsk5";
+import { hsk6 } from "../../../../data/words/hsk6";
 
 const prisma = new PrismaClient();
 const words = {
-    "toeic600": toeic600,
+    "toeic500": toeic500,
     "toeic700": toeic700,
-    "toeic800": toeic800
+    "toeic900": toeic900,
+    "hsk4": hsk4,
+    "hsk5": hsk5,
+    "hsk6": hsk6
 }
 export async function POST(request: Request) {
     try {

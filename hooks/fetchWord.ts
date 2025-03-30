@@ -23,10 +23,12 @@ export const useFetchWord = () => {
                 setWord(data)
                 setWordExists(true)
             }
+            return data
         } catch (error) {
             console.error(error)
             setWord(null)
             setWordExists(false)
+
         } finally {
             setIsFetchingWord(false)
         }

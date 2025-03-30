@@ -11,10 +11,10 @@ type Props = {
     japaneseExample: string;
     questionExample: string;
     yourAnswer: string;
-    showPronunciationPractice: boolean;
+    children: React.ReactNode;
 }
 
-export default function Evaluation({ evaluation, japaneseExample, questionExample, yourAnswer, showPronunciationPractice }: Props) {
+export default function Evaluation({ evaluation, japaneseExample, questionExample, yourAnswer, children }: Props) {
     return (
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
             <div className={`py-3 px-6 ${evaluation.isCorrect ? 'bg-green-50' : 'bg-yellow-50'}`}>
@@ -65,14 +65,7 @@ export default function Evaluation({ evaluation, japaneseExample, questionExampl
                         </div>
                     </div>
                 </div>
-
-                {/* 発音練習セクション */}
-                {showPronunciationPractice && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-
-                        <SpeechUpload text={questionExample} />
-                    </div>
-                )}
+                {children}
             </div>
         </div>
     )

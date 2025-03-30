@@ -15,12 +15,15 @@
     "lodash": "^4.17.21",
     "microsoft-cognitiveservices-speech-sdk": "^1.42.0",
     "next": "^15.2.4",
+    "pinyin": "^4.0.0-alpha.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "segmentit": "^2.0.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pinyin": "^2.10.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "prisma": "^6.5.0",

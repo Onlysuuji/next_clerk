@@ -14,7 +14,6 @@ export default function WordListPage() {
   const [levelFilter, setLevelFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<string>('level')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
-  const router = useRouter()
   const { language } = useTestLanguage()
 
   // データをロードする
