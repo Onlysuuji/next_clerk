@@ -6,14 +6,12 @@ import { usePathname } from 'next/navigation'
 import Dropdown from '@/components/layouts/Dropdown'
 import { UserButton, SignInButton, SignIn, useAuth, SignOutButton, SignedIn } from '@clerk/nextjs'
 import { Sign } from 'crypto'
+import { useTestLanguage } from '@/context/TestLanguageContext'
 
 export default function Header() {
-    const pathname = usePathname()
-    const [language, setLanguage] = useState('english')
+    const { language } = useTestLanguage()
     const [activeTab, setActiveTab] = useState('')
     const { isSignedIn } = useAuth()
-
-    const isWordListPage = pathname === `/${language}/wordlist`
 
     // タブをクリックした時のハンドラー
     const handleTabClick = (tabName: string) => {

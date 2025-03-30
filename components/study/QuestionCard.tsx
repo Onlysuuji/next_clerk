@@ -1,13 +1,13 @@
-import { Word } from "@prisma/client";
+import { useTestLanguage } from '@/context/TestLanguageContext'
 
-export default function QuestionCard({ count, words, isLoadingExample, yourAnswer, japaneseExample, showLanguage }: { count: number, words: Word[], isLoadingExample: boolean, yourAnswer: string, japaneseExample: string, showLanguage: string }) {
+export default function QuestionCard({ isLoadingExample, japaneseExample }: { isLoadingExample: boolean, japaneseExample: string }) {
+    const { showLanguage } = useTestLanguage()
     return (
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
             {/* 進捗バー */}
             <div className="h-1 bg-gray-100">
                 <div
                     className="h-full bg-blue-500 transition-all duration-500"
-                    style={{ width: `${(count / words.length) * 100}%` }}
                 ></div>
             </div>
 

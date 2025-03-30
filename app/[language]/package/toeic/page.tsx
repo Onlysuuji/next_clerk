@@ -1,82 +1,16 @@
 'use client'
 
+import { TOEIC_LEVELS, SAMPLE_WORDS, WORD_TYPE } from '@/lib/toeicword'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 
-// TOEICスコア別の単語レベル定義
-const TOEIC_LEVELS = [
-  { score: 400, level: 'Beginner', words: 50 },
-  { score: 500, level: 'Elementary', words: 100 },
-  { score: 600, level: 'Pre-Intermediate', words: 150 },
-  { score: 700, level: 'Intermediate', words: 200 },
-  { score: 800, level: 'Upper-Intermediate', words: 250 },
-  { score: 900, level: 'Advanced', words: 300 },
-]
-
-// 単語タイプ定義
-type Word = {
-  en: string;
-  ja: string;
-}
-
-// サンプル単語データ（実際のアプリでは各レベルに合わせた単語データベースに置き換え）
-const SAMPLE_WORDS: { [key: string]: Word[] } = {
-  'Beginner': [
-    { en: 'apple', ja: 'りんご' },
-    { en: 'book', ja: '本' },
-    { en: 'cat', ja: '猫' },
-    { en: 'dog', ja: '犬' },
-    { en: 'water', ja: '水' },
-    // 残りのBeginner単語...
-  ],
-  'Elementary': [
-    { en: 'accomplish', ja: '達成する' },
-    { en: 'benefit', ja: '利益' },
-    { en: 'crucial', ja: '重要な' },
-    { en: 'diverse', ja: '多様な' },
-    { en: 'enhance', ja: '高める' },
-    // 残りのElementary単語...
-  ],
-  'Pre-Intermediate': [
-    { en: 'allocate', ja: '割り当てる' },
-    { en: 'compromise', ja: '妥協' },
-    { en: 'diligent', ja: '勤勉な' },
-    { en: 'elaborate', ja: '精巧な' },
-    { en: 'frequent', ja: '頻繁な' },
-    // 残りのPre-Intermediate単語...
-  ],
-  'Intermediate': [
-    { en: 'adjacent', ja: '隣接した' },
-    { en: 'commence', ja: '開始する' },
-    { en: 'diminish', ja: '減少する' },
-    { en: 'expedite', ja: '促進する' },
-    { en: 'fluctuate', ja: '変動する' },
-    // 残りのIntermediate単語...
-  ],
-  'Upper-Intermediate': [
-    { en: 'affirm', ja: '確認する' },
-    { en: 'coherent', ja: '一貫した' },
-    { en: 'discrepancy', ja: '相違' },
-    { en: 'elicit', ja: '引き出す' },
-    { en: 'feasible', ja: '実行可能な' },
-    // 残りのUpper-Intermediate単語...
-  ],
-  'Advanced': [
-    { en: 'acumen', ja: '洞察力' },
-    { en: 'disparate', ja: '異質の' },
-    { en: 'empirical', ja: '経験的な' },
-    { en: 'juxtapose', ja: '並置する' },
-    { en: 'nuance', ja: '微妙な違い' },
-    // 残りのAdvanced単語...
-  ]
-}
 
 export default function TOEICWordPackPage() {
   const [targetScore, setTargetScore] = useState<number | null>(null)
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null)
-  const [wordList, setWordList] = useState<Word[]>([])
-  const [selectedWords, setSelectedWords] = useState<Word[]>([])
+  const [wordList, setWordList] = useState<WORD_TYPE[]>([])
+  const [selectedWords, setSelectedWords] = useState<WORD_TYPE[]>([])
   const [isRegistering, setIsRegistering] = useState(false)
   const [isRegistered, setIsRegistered] = useState(false)
   const [message, setMessage] = useState('')
@@ -109,7 +43,7 @@ export default function TOEICWordPackPage() {
     setMessage('登録中...')
 
     try {
-      const response = await fetch(`/api/words/seeds/toeic${targetScore}`, { 
+      const response = await fetch(`/api/words/seeds/toeic${targetScore}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -120,7 +54,7 @@ export default function TOEICWordPackPage() {
         })
       })
       const data = await response.json();
-      
+
       if (response.ok) {
         setMessage(data.message);
         setIsRegistered(true);
@@ -195,7 +129,7 @@ export default function TOEICWordPackPage() {
                   <tr
                     key={index}
                     className={
-                      selectedWords.some(w => w.en === word.en)
+                      selectedWords.some(w => w.question === word.question)
                         ? 'bg-blue-50'
                         : 'hover:bg-gray-50'
                     }
@@ -203,10 +137,10 @@ export default function TOEICWordPackPage() {
                     <td className="px-4 py-2 whitespace-nowrap">
                       ●
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap font-medium">{word.en}</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-gray-600">{word.ja}</td>
+                    <td className="px-4 py-2 whitespace-nowrap font-medium">{word.question}</td>
+                    <td className="px-4 py-2 whitespace-nowrap text-gray-600">{word.japanese}</td>
                   </tr>
-                ))} 
+                ))}
               </tbody>
             </table>
           </div>
@@ -228,11 +162,10 @@ export default function TOEICWordPackPage() {
             <button
               onClick={registerWords}
               disabled={isRegistered}
-              className={`px-6 py-3 rounded-lg font-medium text-white ${
-                isRegistered 
-                  ? 'bg-gray-400 cursor-not-allowed' 
+              className={`px-6 py-3 rounded-lg font-medium text-white ${isRegistered
+                  ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
-              }`}
+                }`}
             >
               {isRegistered ? '登録済み' : 'このレベルの単語を登録する'}
             </button>

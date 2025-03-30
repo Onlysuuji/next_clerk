@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useRef } from 'react';
+import { useTestLanguage } from '@/context/TestLanguageContext';
 import convertWebMToWav from '@/utils/WebMToWav';
 
-export default function SpeechUpload({ text, language }: { text: string, language: string }) {
+export default function SpeechUpload({ text }: { text: string }) {
+    const { language } = useTestLanguage()
     const [result, setResult] = useState<any>(null);
     const [recording, setRecording] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);

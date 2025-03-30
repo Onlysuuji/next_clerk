@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/layouts/Header'
 import { ClerkProvider } from '@clerk/nextjs'
+import { TestLanguageProvider } from '@/context/TestLanguageContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
@@ -26,10 +27,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <div className="flex flex-col min-h-screen">
           <ClerkProvider>
-            <Header />
-            <main>
-              {children}
-            </main>
+            <TestLanguageProvider>
+              <Header />
+              <main>
+                {children}
+              </main>
+            </TestLanguageProvider>
           </ClerkProvider>
 
         </div>

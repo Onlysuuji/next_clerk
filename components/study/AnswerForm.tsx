@@ -1,18 +1,22 @@
-"use client";
+'use client'
+
+import { useTestLanguage } from "@/context/TestLanguageContext";
+import { Word } from "@prisma/client";
+import { useRef } from "react";
 type Props = {
+    word: Word | null;
     yourAnswer: string;
     setYourAnswer: (value: string) => void;
     handleSubmit: (e: React.FormEvent) => void;
     handleNextQuestion: () => void;
-    handleDeleteWord: () => void;
+    handleDeleteWord: (wordId: number) => void;
     isLoadingExample: boolean;
     showAnswer: boolean;
-    inputRef: React.RefObject<HTMLInputElement | null>;
     isEvaluating: boolean;
-    showLanguage: string;
 };
 
 const AnswerForm = ({
+    word,
     yourAnswer,
     setYourAnswer,
     handleSubmit,
@@ -20,12 +24,12 @@ const AnswerForm = ({
     handleDeleteWord,
     isLoadingExample,
     showAnswer,
-    inputRef,
     isEvaluating,
-    showLanguage,
 }: Props) => {
+    const inputRef = useRef<HTMLInputElement>(null)
+    const { showLanguage } = useTestLanguage()
     return (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 ">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="answer" className="block text-sm font-medium text-gray-700 mb-2">
@@ -75,7 +79,7 @@ const AnswerForm = ({
 
                     <button
                         type="button"
-                        onClick={handleDeleteWord}
+                        onClick={() => handleDeleteWord(word?.id ?? 0)}
                         className="px-5 py-2 bg-red-100 text-red-600 rounded-md font-medium hover:bg-red-200 transition-all duration-300 cursor-pointer"
                         disabled={isLoadingExample}
                     >
