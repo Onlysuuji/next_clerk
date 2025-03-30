@@ -1,64 +1,75 @@
-import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
-import { Buffer } from 'buffer';
-import { NextResponse } from 'next/server';
+import * as sdk from "microsoft-cognitiveservices-speech-sdk";
+import { Buffer } from "buffer";
+import { NextResponse } from "next/server";
 
-const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || '';
-const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || 'eastus';
+const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || "";
+const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || "eastus";
+
 const azure_language: { [key: string]: string } = {
-    "english": "en-US",
-    "chinese": "zh-CN",
-    "french": "fr-FR",
+    english: "en-US",
+    chinese: "zh-CN",
+    french: "fr-FR",
 };
 
 export async function GET() {
-    console.log("📩 API: /api/speech にリクエストを受信GET");
+    console.log("📩 API: /api/speech にリクエストを受信 (GET)");
     return NextResponse.json({ message: "GET request received" });
 }
 
-export async function POST(req: Request, res: Response) {
+// ✅ `res` を削除
+export async function POST(req: Request) {
+    console.log("📩 API: /api/speech にリクエストを受信 (POST)");
 
-    console.log("📩 API: /api/speech にリクエストを受信POST");
     try {
         const { wav, text, language } = await req.json();
         console.log("🔍 受信データ:", { text, language });
+
         if (!wav || !text) {
-            return new Response(JSON.stringify({ error: 'Missing required fields: wav or text' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            return NextResponse.json(
+                { error: "Missing required fields: wav or text" },
+                { status: 400 }
+            );
         }
 
         // Base64 からバイナリデータに変換
-        const buffer = Buffer.from(wav, 'base64');
+        const buffer = Buffer.from(wav, "base64");
 
         let assessmentResult;
 
         try {
             console.log("🚀 pronunciationAssessmentContinuousWithFile() を呼び出し");
 
-            assessmentResult = await pronunciationAssessmentContinuousWithFile(buffer, text, language);
+            assessmentResult = await pronunciationAssessmentContinuousWithFile(
+                buffer,
+                text,
+                language
+            );
 
             console.log("✅ pronunciationAssessmentContinuousWithFile() 完了:", assessmentResult);
-
         } catch (error) {
             console.error("❌ エラー発生:", error);
+            return NextResponse.json(
+                { error: "Pronunciation assessment failed", details: error },
+                { status: 500 }
+            );
         }
 
-        return new Response(JSON.stringify({ success: true, result: assessmentResult }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return NextResponse.json(
+            { success: true, result: assessmentResult },
+            { status: 200 }
+        );
     } catch (error: unknown) {
         console.error(error);
-        return new Response(JSON.stringify({
-            error: 'Internal Server Error',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return NextResponse.json(
+            {
+                error: "Internal Server Error",
+                details: error instanceof Error ? error.message : "Unknown error",
+            },
+            { status: 500 }
+        );
     }
 }
+
 
 async function pronunciationAssessmentContinuousWithFile(wav: Buffer, text: string, language: string) {
     return new Promise((resolve, reject) => {
@@ -120,13 +131,8 @@ async function pronunciationAssessmentContinuousWithFile(wav: Buffer, text: stri
             recognizer.stopContinuousRecognitionAsync();
         };
 
-        recognizer.startContinuousRecognitionAsync((err) => {
-            if (err) {
-                console.error("❌ 認識開始エラー:", err);
-                reject(new Error("startContinuousRecognitionAsync() failed: " + err));
-            } else {
-                console.log("🎧 認識開始成功！");
-            }
+        recognizer.startContinuousRecognitionAsync(() => {
+            console.log("🎧 認識開始成功！");
         });
     });
 }
