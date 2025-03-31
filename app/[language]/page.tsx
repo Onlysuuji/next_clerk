@@ -46,7 +46,6 @@ export default function StudyPage() {
   }, [language])
 
   useEffect(() => {
-    console.log("voice", voice)
     if (voice && questionExample) {
       console.log("fetchAudioData in voiceUseEffect")
       fetchAudioData(questionExample, language, voice)

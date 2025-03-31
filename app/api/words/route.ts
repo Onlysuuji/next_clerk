@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { currentUser } from '@clerk/nextjs/server'
 
 const prisma = new PrismaClient()
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const user = await currentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'ユーザーが見つかりません' }, { status: 401 })
+    }
+    const { searchParams } = new URL(request.url)
+    const language = searchParams.get('language') as string
+
     const words = await prisma.word.findMany({
-      orderBy: { id: 'asc' }
+      where: {
+        language,
+      }
     })
 
     return NextResponse.json({ words })
@@ -24,7 +34,7 @@ export async function POST(request: Request) {
     const data = await request.json()
 
     // バリデーション
-    if (!data.english || !data.japanese) {
+    if (!data.question || !data.japanese) {
       return NextResponse.json(
         { error: '英語と日本語は必須です' },
         { status: 400 }
@@ -40,9 +50,9 @@ export async function POST(request: Request) {
 
     const word = await prisma.word.create({
       data: {
-        english: data.english,
+        question: data.question,
         japanese: data.japanese,
-        level: data.level || 'TOEIC 600-700',
+        tag: data.tag || 'TOEIC 600-700',
         userId: data.userId,
         lastStudied: null,
         correctCount: 0,

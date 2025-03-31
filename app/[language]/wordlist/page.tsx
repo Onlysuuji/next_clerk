@@ -1,20 +1,25 @@
 'use client'
 
 import { useState, useEffect, useContext } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Word } from '@prisma/client';
 import { useTestLanguage } from '@/context/TestLanguageContext';
+import { Word } from '@prisma/client';
 
 export default function WordListPage() {
   // 状態管理
   const [words, setWords] = useState<Word[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [levelFilter, setLevelFilter] = useState<string>('all')
+  const [tagFilter, setTagFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<string>('level')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const { language } = useTestLanguage()
+  const [tags, setTags] = useState<string[]>([]);
+  useEffect(() => {
+    const uniqueTags = [...new Set(words.map(word => word.tag))];
+    setTags(uniqueTags)
+  }, [words])
+
 
   // データをロードする
   useEffect(() => {
@@ -35,9 +40,10 @@ export default function WordListPage() {
         setLoading(false)
       }
     }
-
-    fetchWords()
-  }, [])
+    if (language) {
+      fetchWords()
+    }
+  }, [language])
 
   // 単語を削除する関数
   const handleDeleteWord = async (id: number) => {
@@ -79,7 +85,7 @@ export default function WordListPage() {
       (word.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
         word.japanese.toLowerCase().includes(searchTerm.toLowerCase())) &&
       // レベルでフィルタリング
-      (levelFilter === 'all' || word.tag === levelFilter)
+      (tagFilter === 'all' || word.tag === tagFilter)
     )
     .sort((a, b) => {
       // ソート処理
@@ -152,7 +158,7 @@ export default function WordListPage() {
   }
 
   return (
-    <div className="pt-24 min-h-screen bg-white">
+    <div className="bg-white">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {/* ヘッダーセクション */}
         <div className="mb-8">
@@ -189,19 +195,19 @@ export default function WordListPage() {
               />
             </div>
             <div>
-              <label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-1">
-                難易度
+              <label htmlFor="tag" className="block text-sm font-medium text-gray-700 mb-1">
+                タグ
               </label>
               <select
-                id="level"
+                id="tag"
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={levelFilter}
-                onChange={(e) => setLevelFilter(e.target.value)}
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
               >
+                {tags.map((tag) => (
+                  <option key={tag} value={tag}>{tag}</option>
+                ))}
                 <option value="all">すべて</option>
-                <option value="easy">簡単</option>
-                <option value="medium">普通</option>
-                <option value="hard">難しい</option>
               </select>
             </div>
             <div>
@@ -217,9 +223,9 @@ export default function WordListPage() {
                   setSortDirection('asc')
                 }}
               >
-                <option value="english">英単語</option>
+                <option value="question">英単語</option>
                 <option value="japanese">日本語</option>
-                <option value="level">難易度</option>
+                <option value="tag">タグ</option>
                 <option value="lastStudied">最終学習日</option>
                 <option value="correctCount">正解数</option>
               </select>
@@ -239,11 +245,11 @@ export default function WordListPage() {
                 <tr>
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('english')}
+                    onClick={() => handleSort('question')}
                   >
                     <div className="flex items-center">
                       英単語
-                      {sortBy === 'english' && (
+                      {sortBy === 'question' && (
                         <span className="ml-1">
                           {sortDirection === 'asc' ? '↑' : '↓'}
                         </span>
@@ -265,11 +271,11 @@ export default function WordListPage() {
                   </th>
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('level')}
+                    onClick={() => handleSort('tag')}
                   >
                     <div className="flex items-center">
-                      難易度
-                      {sortBy === 'level' && (
+                      タグ
+                      {sortBy === 'tag' && (
                         <span className="ml-1">
                           {sortDirection === 'asc' ? '↑' : '↓'}
                         </span>
@@ -318,7 +324,7 @@ export default function WordListPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(word.tag)}`}>
-                        {word.tag === 'easy' ? '簡単' : word.tag === 'medium' ? '普通' : '難しい'}
+                        {word.tag}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

@@ -1,8 +1,10 @@
-import { useLanguage } from '@/context/LanguageContext';
+"use client";
+
+import { useTestLanguage } from '@/context/TestLanguageContext';
 import { redirect } from 'next/navigation'
 
 export default function Home() {
-  const { language } = useLanguage();
+  const { language } = useTestLanguage();
 
   // 英語学習ページにリダイレクト
   redirect(`/${language}`)
