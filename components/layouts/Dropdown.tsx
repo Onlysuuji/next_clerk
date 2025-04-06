@@ -14,9 +14,10 @@ interface DropdownProps {
   items: DropdownItem[]
   align?: 'left' | 'right'
   width?: string
+  setActiveTab?: (tab: string) => void
 }
 
-export default function Dropdown({ trigger, items, align = 'left', width = 'w-48' }: DropdownProps) {
+export default function Dropdown({ trigger, items, align = 'left', width = 'w-48', setActiveTab }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -47,7 +48,10 @@ export default function Dropdown({ trigger, items, align = 'left', width = 'w-48
               key={index}
               href={item.href}
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false)
+                setActiveTab?.('')
+              }}
             >
               <div className="flex flex-row items-center">
                 {item.icon && (

@@ -1,4 +1,6 @@
 import SpeechUpload from '@/components/SpeechUpload'
+import { TextComponent } from './TextComponent';
+import { AdviceComponent } from './AdviceComponent';
 
 type Evaluation = {
     isCorrect: boolean;
@@ -8,13 +10,10 @@ type Evaluation = {
 
 type Props = {
     evaluation: Evaluation;
-    japaneseExample: string;
-    questionExample: string;
-    yourAnswer: string;
     children: React.ReactNode;
 }
 
-export default function Evaluation({ evaluation, japaneseExample, questionExample, yourAnswer, children }: Props) {
+export default function Evaluation({ evaluation, children }: Props) {
     return (
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
             <div className={`py-3 px-6 ${evaluation.isCorrect ? 'bg-green-50' : 'bg-yellow-50'}`}>
@@ -36,35 +35,8 @@ export default function Evaluation({ evaluation, japaneseExample, questionExampl
                     )}
                 </h3>
             </div>
-
             <div className="p-6 space-y-5">
-                {/* 問題と回答 */}
-                <div className="space-y-3">
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <span className="font-medium text-gray-700">日本語例文: </span>
-                        <span className="text-gray-800">{japaneseExample}</span>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <span className="font-medium text-gray-700">模範解答: </span>
-                        <span className="text-green-600 font-medium">{questionExample}</span>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <span className="font-medium text-gray-700">あなたの回答: </span>
-                        {yourAnswer}
-                    </div>
-                </div>
-
                 {/* 評価とアドバイス */}
-                <div>
-                    <div className="p-4 bg-white rounded-lg border border-gray-200 space-y-4">
-                        <div className="pl-4 border-l-2 border-blue-200">
-                            <h5 className="font-medium text-blue-700 mb-1">文法の修正:</h5>
-                            <p className="text-gray-600">{evaluation.suggestion}</p>
-                            <p className="text-gray-600">{evaluation.score}</p>
-
-                        </div>
-                    </div>
-                </div>
                 {children}
             </div>
         </div>

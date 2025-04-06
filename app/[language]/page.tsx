@@ -17,11 +17,15 @@ import StudyButton from '@/components/study/StudyButton'
 import DeleteButton from '@/components/study/DeleteButton'
 import { useFetchAudioData } from '@/hooks/fetchAudioData'
 import { VOICE_OPTIONS } from '@/constants/VoiceOptions'
+import { HeaderComponent } from '@/components/layouts/HeaderComponent'
+import YourAnswer from '@/components/study/YourAnswer'
+import { TextComponent } from '@/components/study/TextComponent'
+import { AdviceComponent } from '@/components/study/AdviceComponent'
 export default function StudyPage() {
   // 状態管理
   const [yourAnswer, setYourAnswer] = useState<string>('')
   const [showAnswer, setShowAnswer] = useState<boolean>(false)
-  const { language } = useTestLanguage()
+  const { language, showLanguage } = useTestLanguage()
   const inputRef = useRef<HTMLInputElement>(null)
   const [voice, setVoice] = useState(VOICE_OPTIONS[language]?.[0]?.id || "");
 
@@ -52,6 +56,21 @@ export default function StudyPage() {
     }
   }, [voice])
 
+  // 回答チェック
+  const handleAnswerCheck = async () => {
+    if (yourAnswer.trim() === '') {
+      alert(`回答を入力してください${questionExample}, ${japaneseExample}`)
+      return
+    }
+
+    const evaluation = await evaluate(yourAnswer, questionExample, japaneseExample)
+    setShowAnswer(true)
+    if (word?.id) {
+      updateWord(word.id, evaluation.isCorrect)
+    }
+  }
+
+  // 次の問題へ
   const handleNextQuestion = async () => {
     try {
       // ✅ 入力・評価の初期化
@@ -84,81 +103,58 @@ export default function StudyPage() {
     }
   };
 
-
-  // フォーム送信時の処理
-  const handleAnswerCheck = async () => {
-    if (yourAnswer.trim() === '') {
-      alert(`回答を入力してください${questionExample}, ${japaneseExample}`)
-      return
-    }
-
-    const evaluation = await evaluate(yourAnswer, questionExample, japaneseExample)
-    setShowAnswer(true)
-    if (word?.id) {
-      updateWord(word.id, evaluation.isCorrect)
-    }
-  }
-
   return (
-    <div className="bg-white">
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        {/* ヘッダーセクション */}
-        <StudyHeader />
+    <HeaderComponent>
+      {!wordExists ? (
+        <NoWordMessage />
+      ) : (
+        <div className="space-y-6">
+          {/* 問題カード */}
+          <QuestionCard isLoadingExample={isLoadingExample} japaneseExample={japaneseExample} />
+          {/* 回答フォーム */}
+          <AnswerForm>
+            <YourAnswer>
+              <input id="answer"
+                type="text"
+                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={yourAnswer}
+                onChange={(e) => setYourAnswer(e.target.value)}
+                ref={inputRef}
+                autoCorrect="off"
+                placeholder={`例文の${showLanguage}訳を入力してください...`}
+                autoCapitalize="off"
+                spellCheck="false"
+                autoComplete="off"
+                disabled={showAnswer || isLoadingExample}
+              />
+            </YourAnswer>
+            <div className="flex justify-between h-full">
+              <StudyButton showAnswer={showAnswer} handleNextQuestion={handleNextQuestion} handleAnswerCheck={handleAnswerCheck} isLoadingExample={isLoadingExample} isEvaluating={isEvaluating} />
+              <TextToSpeech text={questionExample} audioUrl={audioUrl} voice={voice} setVoice={setVoice} />
+              <DeleteButton deleteWord={deleteWord} isLoadingExample={isLoadingExample} word={word} />
+            </div>
+          </AnswerForm>
 
-        {!wordExists ? (
-          <NoWordMessage />
-        ) : (
-          <div className="space-y-6">
-            {/* 問題カード */}
-            <QuestionCard
-              isLoadingExample={isLoadingExample}
-              japaneseExample={japaneseExample}
-            />
-
-
-            {/* 回答フォーム */}
-            <AnswerForm
-              yourAnswer={yourAnswer}
-              setYourAnswer={setYourAnswer}
-              isLoadingExample={isLoadingExample}
-              showAnswer={showAnswer}
-              inputRef={inputRef}
-            >
-
-              <div className="flex justify-between h-full">
-                <StudyButton
-                  showAnswer={showAnswer}
-                  handleNextQuestion={handleNextQuestion}
-                  handleAnswerCheck={handleAnswerCheck}
-                  isLoadingExample={isLoadingExample}
-                  isEvaluating={isEvaluating}
-                />
-
-                <TextToSpeech text={questionExample} audioUrl={audioUrl} voice={voice} setVoice={setVoice} />
-                <DeleteButton deleteWord={deleteWord} isLoadingExample={isLoadingExample} word={word} />
+          {/* 回答結果 */}
+          {evaluation && showAnswer && (
+            <Evaluation evaluation={evaluation}>
+              {/* 問題と回答 */}
+              <div className="space-y-3">
+                <TextComponent label="日本語例文" text={japaneseExample} />
+                <TextComponent label="模範解答" text={questionExample} />
+                <TextComponent label="あなたの回答" text={yourAnswer} />
               </div>
-            </AnswerForm>
-
-            {/* 回答結果 */}
-            {evaluation && showAnswer && (
-              <Evaluation
-                evaluation={evaluation}
-                japaneseExample={japaneseExample}
-                questionExample={questionExample}
-                yourAnswer={yourAnswer}
-              >
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-
-                  <SpeechUpload text={questionExample} >
-                    <TextToSpeech text={questionExample} audioUrl={audioUrl} voice={voice} setVoice={setVoice} />
-                  </SpeechUpload>
-                </div>
-              </Evaluation>
-            )}
-          </div>
-        )
-        }
-      </main >
-    </div >
+              <AdviceComponent evaluation={evaluation} />
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <SpeechUpload text={questionExample} >
+                  <TextToSpeech text={questionExample} audioUrl={audioUrl} voice={voice} setVoice={setVoice} />
+                </SpeechUpload>
+              </div>
+            </Evaluation>
+          )}
+        </div>
+      )
+      }
+    </HeaderComponent>
   )
 } 

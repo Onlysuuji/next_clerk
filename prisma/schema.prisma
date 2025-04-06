@@ -15,15 +15,17 @@ datasource db {
 
 model Word {
   id             Int       @id @default(autoincrement())
-  language       String    @default("english")
+  language       String   
   question       String
   japanese       String
-  tag          String    @default("TOEIC 600-700")
+  tag            String    
   userId         String    
-  lastStudied    DateTime?
+  lastStudied    DateTime? @default(now())
   correctCount   Int       @default(0)
   incorrectCount Int       @default(0)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  @@unique([question, userId])
 }
 

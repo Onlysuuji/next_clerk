@@ -114,8 +114,8 @@ export default function SpeechUpload({ text, children }: { text: string, childre
     };
 
     return (
-        <div>
-            <h1>発音評価</h1>
+        <div className='space-y-4'>
+            <h1 className='text-center text-lg text-gray-700'>発音評価: 文章を読んで発音を評価します。</h1>
 
             <div className="p-4 bg-white rounded-lg border border-blue-100 mb-4">
 

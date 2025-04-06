@@ -1,6 +1,7 @@
 'use client'
 
-import { LanguagePack, LanguageSubPack, useTestLanguage } from '@/context/TestLanguageContext'
+import { LanguagePack, LanguageSubPack } from '@/context/TestLanguageContextType'
+import { useTestLanguage } from '@/context/TestLanguageContext'
 import { useUser } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
 
@@ -9,12 +10,18 @@ export default function WordPackListPage() {
   const { wordPacks, showLanguage } = useTestLanguage()
   const { user } = useUser()
   const [selectedPack, setSelectedPack] = useState<LanguagePack | undefined>()
-  const [selectedWordPack, setSelectedWordPack] = useState<LanguageSubPack | undefined>(selectedPack?.subpack?.[0])
-  const [ignoreList, setIgnoreList] = useState<string[]>(user?.publicMetadata?.ignoreList as string[])
+  const [selectedWordPack, setSelectedWordPack] = useState<LanguageSubPack | undefined>()
+  const [ignoreList, setIgnoreList] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (selectedPack) {
+      setSelectedWordPack(selectedPack.subpack?.[0]);
+    }
+  }, [selectedPack]);
 
   useEffect(() => {
     setIgnoreList(user?.publicMetadata?.ignoreList as string[] || []);
-  }, [JSON.stringify(user?.publicMetadata?.ignoreList)]);
+  }, [user?.publicMetadata?.ignoreList]);
 
   const handleClick = async () => {
     if (ignoreList?.includes(selectedWordPack?.id as string)) {
@@ -33,10 +40,11 @@ export default function WordPackListPage() {
     } else {
       console.error("失敗:", data.message || "不明なエラー");
     }
+    if (data.duplicates.length > 0) {
+      console.log("重複したデータは登録されません");
+      console.log("重複したデータ:", data.duplicates);
+    }
   }
-
-
-
 
   return (
     <div className='flex flex-col gap-4'>
@@ -47,7 +55,7 @@ export default function WordPackListPage() {
       </p>
       <div className="w-5/6 mx-auto max-w-5xl">
         <div className="flex flex-wrap justify-center gap-4">
-          {wordPacks.map((pack) => (
+          {wordPacks.map((pack: LanguagePack) => (
             <div
               key={pack.id}
               className={`w-full sm:w-1/3 md:w-1/4 lg:w-1/5 cursor-pointer text-center rounded-md border transition-transform duration-300 ease-in-out shadow-sm

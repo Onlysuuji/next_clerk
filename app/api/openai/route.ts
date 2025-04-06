@@ -17,15 +17,6 @@ export async function POST(request: Request) {
     // OpenAI APIのエンドポイント
     const apiUrl = 'https://api.openai.com/v1/chat/completions'
 
-    // JSONレスポンスを求められた場合、応答形式を調整
-    const isJsonRequest = prompt.includes('JSON') || prompt.includes('json')
-
-    // 回答評価に関するリクエストかどうか判断
-    const isEvaluationRequest = prompt.includes('評価') || prompt.includes('isCorrect')
-
-    // システムプロンプトを設定
-    let systemPrompt = 'あなたは簡潔で役立つ情報を提供する言語学習者の回答を評価する教師です。回答を詳細に分析し、丁寧で具体的なフィードバックを提供してください。JSON形式で応答する場合は、必ず有効なJSONオブジェクトを返してください。'
-
     // APIリクエスト
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -37,17 +28,11 @@ export async function POST(request: Request) {
         model: 'gpt-4o',
         messages: [
           {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: isEvaluationRequest ? 0.3 : 0.7, // 評価の場合は一貫性を重視
         max_tokens: 1024,
-        response_format: isJsonRequest ? { type: "json_object" } : undefined
       })
     })
 

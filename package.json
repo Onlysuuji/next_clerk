@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/localizations": "^3.13.4",
     "@clerk/nextjs": "^6.12.4",
     "@prisma/client": "^6.5.0",
     "@types/lodash": "^4.17.16",

@@ -1,8 +1,9 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/layouts/Header'
-import { ClerkProvider } from '@clerk/nextjs'
+import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs'
 import { TestLanguageProvider } from '@/context/TestLanguageContext'
+import { jaJP } from '@clerk/localizations'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
@@ -26,13 +27,38 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={inter.className}>
         <div className="flex flex-col min-h-screen">
-          <ClerkProvider>
-            <TestLanguageProvider>
+          <ClerkProvider localization={jaJP}>
+            <SignedIn>
+              <TestLanguageProvider>
+                <main className="flex flex-col min-h-screen gap-3">
+                  <Header />
+                  {children}
+                </main>
+              </TestLanguageProvider>
+            </SignedIn>
+            <SignedOut>
               <main className="flex flex-col min-h-screen gap-3">
-                <Header />
-                {children}
+                <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-blue-50 to-blue-100">
+                  <div className="max-w-md p-8 mx-auto text-center bg-white rounded-lg shadow-lg">
+                    <h1 className="mb-4 text-3xl font-bold text-blue-600">OnlyS</h1>
+                    <p className="mb-6 text-gray-600">効率的な言語学習をサポートする最適なツールです。ログインして学習を始めましょう。</p>
+                    <div className="px-4 flex gap-2 w-full justify-between items-center">
+                      <SignInButton>
+                        <button className="px-6 py-2 font-medium text-white transition-colors bg-blue-500 rounded-md hover:bg-blue-600">
+                          ログイン
+                        </button>
+                      </SignInButton>
+                      <p className="text-gray-600">または</p>
+                      <SignUpButton>
+                        <button className="px-6 py-2 font-medium text-white transition-colors bg-blue-500 rounded-md hover:bg-blue-600">
+                          新規登録
+                        </button>
+                      </SignUpButton>
+                    </div>
+                  </div>
+                </div>
               </main>
-            </TestLanguageProvider>
+            </SignedOut>
           </ClerkProvider>
 
         </div>

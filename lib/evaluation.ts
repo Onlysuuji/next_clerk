@@ -12,13 +12,12 @@ interface AnswerEvaluation {
 // ユーザーの回答を評価する
 export const evaluateAnswer = async (userAnswer: string, questionExample: string, japaneseExample: string) => {
     const prompt = `
-あなたは、以下の日本語例文に対するユーザーの英訳を評価するAIです。
+あなたは、以下の日本語例文に対するユーザーの回答の翻訳を評価するAIです。
 
 日本語例文: ${japaneseExample.toLowerCase()}
-模範英訳: ${questionExample}
 ユーザーの回答: ${userAnswer}
 
-次の「評価ポイント」に基づき、ユーザーの回答を具体的かつ厳密に評価してください。
+次の「評価ポイント」に基づき、ユーザーの回答を評価してください。
 
 評価ポイント（採点基準）：
 - 文法の正確さ（0〜50点）
@@ -37,9 +36,7 @@ export const evaluateAnswer = async (userAnswer: string, questionExample: string
   "score": 0~100,
   "isCorrect": true/false, // 81点以上ならtrue
   "suggestion": "ユーザーの回答に対する総合的な評価と改善案（日本語で具体的に記述）"
-}
-
-なお、評価は非常に厳密に行い、スコアには明確な根拠を反映してください。`
+}`
     try {
         const response = await callOpenai(prompt)
 

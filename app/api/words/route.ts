@@ -16,6 +16,7 @@ export async function GET(request: Request) {
     const words = await prisma.word.findMany({
       where: {
         language,
+        userId: user.id
       }
     })
 
@@ -54,9 +55,7 @@ export async function POST(request: Request) {
         japanese: data.japanese,
         tag: data.tag || 'TOEIC 600-700',
         userId: data.userId,
-        lastStudied: null,
-        correctCount: 0,
-        incorrectCount: 0
+        language: data.language || 'english',
       }
     })
 
